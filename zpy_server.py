@@ -7,7 +7,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 53231 #change each time you run, all computers use same host and port
+PORT = 16325 #change each time you run, all computers use same host and port
 BACKLOG = 4 #num clients able to join
 
 #creates server, connects to host and port, and listens for connections
@@ -56,7 +56,7 @@ playerNum = 0
 serverChannel = Queue(100) #queue of string instructions
 threading.Thread(target = serverThread, args = (clientele, serverChannel)).start() #server thread
 
-names = ["Chaya", "Austin", "Kyle", "Arman"]
+names = ["Player1", "Player2", "Player3", "Player4"]
 
 while True:
   client, address = server.accept() #let other clients join
