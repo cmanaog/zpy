@@ -26,6 +26,12 @@ class Player(object):
     def playCard(self, card):
         self.cards.remove(card)
     
+    def addPoints(self, card):
+        num = int(card[:-1])
+        if num == 10 or num == 13:
+            self.points += 10
+        elif num == 5:
+            self.points += 5
 
 
 

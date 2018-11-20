@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 61922 #change each time you run, all computers use same host and port
+PORT = 16233 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -117,7 +117,8 @@ def init(data):
     
     data.distribute = False
     
-    #opposition points
+    #opposition 
+    data.startingHand = 25
     data.points = 0
     
     #numebr of players that have gone in a round 
@@ -268,7 +269,7 @@ def nextTurn(data):
         data.turn = "Player" + str(int(data.turn[-1]) + 1)
     
 def distributeCards(data):
-    numShouldHave  = 104 // 4 - 1
+    numShouldHave  = data.startingHand
     currentlyHave = len(data.me.cards)
     cardsDrawn = ""
     for i in range(numShouldHave - currentlyHave):
@@ -287,10 +288,12 @@ def setupKeyPressed(event, data):
     msgDistribute = ""
   
     if event.keysym == "space" and data.me.PID == data.turn:
+        
         if data.distribute:
             msgDistribute = "distributeCards " + distributeCards(data) + "\n"
             data.mode = "playGame"
             data.turn = data.dictator
+            #nextTurn(data)
         else:
             #draw card
             card = data.me.drawCard(data)
@@ -306,6 +309,8 @@ def setupKeyPressed(event, data):
                 msg = ""
                 msgDistribute = "distributeCards " + distributeCards(data) + "\n"
                 data.turn = data.dictator
+        #nextTurn(data)
+        
             
         
     # send the message to other players!
@@ -348,6 +353,7 @@ def setupTimerFired(data):
             data.dictator = PID
             data.trumpSuit = card[-1]
             data.cards.remove(card)
+            #nextTurn(data)
             #data.mode = "playGame"         
  
         elif (command == "playerDrew"):
@@ -359,13 +365,14 @@ def setupTimerFired(data):
         elif (command == "distributeCards"):
             PID = msg[1]
             removeCards = msg[2:]
+            
             print("here", removeCards)
             for card in removeCards:
                 print(card)
                 data.cards.remove(card)
             print("here2", data.cards)
             nextTurn(data)
-            if len(data.me.cards) < 25:
+            if len(data.me.cards) < data.startingHand:
                 data.distribute = True
                 #data.turn = data.dictator
                 #nextTurn(data)
@@ -382,6 +389,7 @@ def setupRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/4 - 4 * data.margin,
                        text="Setup", fill = "white", font="Arial 30 bold")
     canvas.create_rectangle(data.width/2 - data.margin, data.height/2 - data.margin, data.width/2 + data.margin, data.height/2 + data.margin, fill = "green")
+    
     if data.distribute:
         txt = "Draw Rest of Hand!"
     else:
@@ -417,15 +425,17 @@ def whoWon(data):
     winningSuit = data.roundCards[0][-1] #first suit
     winningRank = int(data.roundCards[0][:-1]) #first rank
     winningIndex = 0
+    print("roundCards", data.roundCards)
     for i in range(1, len(data.roundCards)):
         currRank = int(data.roundCards[i][:-1])
-        currSuit = data.roundCards[-1]
+        currSuit = data.roundCards[i][-1]
+        print("current stuff", currRank, currSuit)
         #following Suit
         if currSuit == winningSuit and currRank > winningRank and winningRank != data.trumpNum:
             winningRank = currRank
             winningIndex = i
-        #trump Suit has been played
-        elif currSuit == data.trumpSuit and winningRank != data.trumpNum:
+        #trump Suit has been played (first)
+        elif currSuit == data.trumpSuit and winningSuit != data.trumpSuit and winningRank != data.trumpNum:
             winningRank = currRank
             winningSuit = currSuit
             winningIndex = i
@@ -439,16 +449,16 @@ def whoWon(data):
             winningRank = currRank
             winningSuit = currSuit
             winningIndex = i
-            
+        print(winningIndex)
     data.numPlayed = 0
     return winningPlayer(data, winningIndex)
 
 #determines who won
 def winningPlayer(data, i):
     print(data.turn[:-1])
-    startingPlayer = int(data.turn[:-1])
+    startingPlayer = int(data.turn[-1])
     winningPlayer = startingPlayer + i
-    if winnerPlayer > 4:
+    if winningPlayer > 4:
         winningPlayer -= 4
     return "Player" + str(winningPlayer)
 
@@ -478,11 +488,26 @@ def isOnCard(data, x, y):
     
 #player is able to play
 def isValid(data, card):
+    startHand = data.roundCards[0]
+    startSuit = startHand[-1] #first suit
+    
+    #following suit
+    if card[-1] == startSuit and card[:-1] != str(trumpNum):
+        return True
+    
+    #add case where does not have suit
+    
+    return False
     pass
+
+#may be unnecessary
+def givePoints(data, playerPID, card):
+    data.others[playerPID].addPoints(card)
     
 #determines what happens if user clicks mouse
 def playGameMousePressed(event, data):
     msg = ""
+    msgWin = ""
     card = isOnCard(data, event.x, event.y)
     if data.turn == data.me.PID and card != None:
         print("here")
@@ -494,12 +519,16 @@ def playGameMousePressed(event, data):
         if data.numPlayed == 4:
             data.turn = whoWon(data)
             data.roundCards = []
-            msg = "someoneWon " + data.turn + "\n"
+            data.numPlayed = 0
+            msgWin = "someoneWon " + data.turn + "\n"
         
     # send the message to other players!
     if (msg != ""):
-      print ("sending: ", msg,)
-      data.server.send(msg.encode())
+        print ("sending: ", msg,)
+        data.server.send(msg.encode())
+    if (msgWin != ""):
+        print ("sending: ", msgWin,)
+        data.server.send(msgWin.encode())    
 
 #determines if user clicks arrow keys
 def playGameKeyPressed(event, data):
@@ -529,6 +558,9 @@ def playGameTimerFired(data):
             
         elif (command == "someoneWon"):
             data.turn = msg[2]
+            #add functinoality of giving points
+            data.numPlayed = 0
+            data.roundCards = []
             
       except:
         print("failed")
