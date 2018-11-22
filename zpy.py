@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 16433 #change each time you run, all computers use same host and port
+PORT = 19813 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -36,6 +36,7 @@ import random
 import math
 from tkinter import *
 import copy
+from images import *
 from card import *
 from image_util import *
 
@@ -59,25 +60,9 @@ def init(data):
     data.others = dict()
     
     data.startbg = PhotoImage(file="img/startbg.gif")
-    data.sleekbg = Image.open('img/sleekbg.gif')
-    data.sleekbg = data.sleekbg.resize((1000,700))
-    data.sleekbg.save("img/sleekbg.gif")
     data.sleekbg = PhotoImage(file="img/sleekbg.gif")
     
     #"s" -> Spade, "c" -> Clover, "d" -> Diamond, "h" -> Heart
-    '''data.cards = [(14,"s"), (14, "c"), (14, "d"),(14, "h"),\
-    (2,"s"), (2, "c"), (2, "d"),(2, "h"),\
-    (3,"s"), (3, "c"), (3, "d"), (3, "h"),\
-    (4,"s"), (4, "c"), (4, "d"), (4, "h"),\
-    (5,"s"), (5, "c"), (5, "d"), (5, "h"),\
-    (6,"s"), (6, "c"), (6, "d"), (6, "h"),\
-    (7,"s"), (7, "c"), (7, "d"), (7, "h"),\
-    (8,"s"), (8, "c"), (8, "d"), (8, "h"),\
-    (9,"s"), (9, "c"), (9, "d"), (9, "h"),\
-    (10,"s"), (10, "c"), (10, "d"), (10, "h"),\
-    (11,"s"), (11, "c"), (11, "d"), (11, "h"),\
-    (12,"s"), (12, "c"), (11, "d"), (11, "h"),\
-    (13,"s"), (13, "c"), (13, "d"), (13, "h")]'''
     data.cards = ["14s", "14c", "14d", "14h",\
     "2s", "2c", "2d", "2h",\
     "3s", "3c", "3d", "3h",\
@@ -106,6 +91,62 @@ def init(data):
     "13s", "13c", "13d", "13h"]
     #data.cards = ["1s", "1c", "1d", "1h",\
     #"2s", "2c", "2d", "2h"]
+    cardsImg = {
+        "14c": PhotoImage(file="img/Cards/14c.gif"),
+        "14d": PhotoImage(file="img/Cards/14d.gif"),
+        "14h": PhotoImage(file="img/Cards/14h.gif"),
+        "14s": PhotoImage(file="img/Cards/14s.gif"),
+        "13c": PhotoImage(file="img/Cards/13c.gif"),
+        "13d": PhotoImage(file="img/Cards/13d.gif"),
+        "13h": PhotoImage(file="img/Cards/13h.gif"),
+        "13s": PhotoImage(file="img/Cards/13s.gif"),
+        "12c": PhotoImage(file="img/Cards/12c.gif"),
+        "12d": PhotoImage(file="img/Cards/12d.gif"),
+        "12h": PhotoImage(file="img/Cards/12h.gif"),
+        "12s": PhotoImage(file="img/Cards/12s.gif"),
+        "11c": PhotoImage(file="img/Cards/11c.gif"),
+        "11d": PhotoImage(file="img/Cards/11d.gif"),
+        "11h": PhotoImage(file="img/Cards/11h.gif"),
+        "11s": PhotoImage(file="img/Cards/11s.gif"),
+        "10c": PhotoImage(file="img/Cards/10c.gif"),
+        "10d": PhotoImage(file="img/Cards/10d.gif"),
+        "10h": PhotoImage(file="img/Cards/10h.gif"),
+        "10s": PhotoImage(file="img/Cards/10s.gif"),
+        "9c": PhotoImage(file="img/Cards/9c.gif"),
+        "9d": PhotoImage(file="img/Cards/9d.gif"),
+        "9h": PhotoImage(file="img/Cards/9h.gif"),
+        "9s": PhotoImage(file="img/Cards/9s.gif"),
+        "8c": PhotoImage(file="img/Cards/8c.gif"),
+        "8d": PhotoImage(file="img/Cards/8d.gif"),
+        "8h": PhotoImage(file="img/Cards/8h.gif"),
+        "8s": PhotoImage(file="img/Cards/8s.gif"),
+        "7c": PhotoImage(file="img/Cards/7c.gif"),
+        "7d": PhotoImage(file="img/Cards/7d.gif"),
+        "7h": PhotoImage(file="img/Cards/7h.gif"),
+        "7s": PhotoImage(file="img/Cards/7s.gif"),
+        "6c": PhotoImage(file="img/Cards/6c.gif"),
+        "6d": PhotoImage(file="img/Cards/6d.gif"),
+        "6h": PhotoImage(file="img/Cards/6h.gif"),
+        "6s": PhotoImage(file="img/Cards/6s.gif"),
+        "5c": PhotoImage(file="img/Cards/5c.gif"),
+        "5d": PhotoImage(file="img/Cards/5d.gif"),
+        "5h": PhotoImage(file="img/Cards/5h.gif"),
+        "5s": PhotoImage(file="img/Cards/5s.gif"),
+        "4c": PhotoImage(file="img/Cards/4c.gif"),
+        "4d": PhotoImage(file="img/Cards/4d.gif"),
+        "4h": PhotoImage(file="img/Cards/4h.gif"),
+        "4s": PhotoImage(file="img/Cards/4s.gif"),
+        "3c": PhotoImage(file="img/Cards/3c.gif"),
+        "3d": PhotoImage(file="img/Cards/3d.gif"),
+        "3h": PhotoImage(file="img/Cards/3h.gif"),
+        "3s": PhotoImage(file="img/Cards/3s.gif"),
+        "2c": PhotoImage(file="img/Cards/2c.gif"),
+        "2d": PhotoImage(file="img/Cards/2d.gif"),
+        "2h": PhotoImage(file="img/Cards/2h.gif"),
+        "2s": PhotoImage(file="img/Cards/2s.gif")
+    
+    }
+    data.cardsImg = cardsImg
     
     data.roundCards = []
     data.startSuit = ""
@@ -407,8 +448,9 @@ def setupRedrawAll(canvas, data):
     #draw cards
     x,y = data.margin, data.height - 3 * data.margin
     for card in data.me.cards:
-        canvas.create_rectangle(x, y, x + data.margin/2, y + data.margin, fill = "green")
-        canvas.create_text(x + data.margin / 4, y + data.margin/2, text = card)
+        canvas.create_image(x, y, image = data.cardsImg[card])
+        #canvas.create_rectangle(x, y, x + data.margin/2, y + data.margin, fill = "green")
+        #canvas.create_text(x + data.margin / 4, y + data.margin/2, text = card)
         x += data.margin/2
     
     if data.me.PID != data.turn:
@@ -582,15 +624,17 @@ def playGameRedrawAll(canvas, data):
     #draw Round Cards
     x_r, y_r = data.width/2 - 2 * data.margin - 20, data.height/2 - data.margin
     for card in data.roundCards:
-        canvas.create_rectangle(x_r, y_r, x_r + data.margin, y_r + data.margin *2, fill = "green")
-        canvas.create_text(x_r + data.margin/2, y_r + data.margin, text = card, fill = "white")
+        canvas.create_image(x_r, y_r, image = data.cardsImg[card])
+        '''canvas.create_rectangle(x_r, y_r, x_r + data.margin, y_r + data.margin *2, fill = "green")
+        canvas.create_text(x_r + data.margin/2, y_r + data.margin, text = card, fill = "white")'''
         x_r += 10 + data.margin
     
     #draw personal cards
     x,y = data.margin, data.height - 3 * data.margin
     for card in data.me.cards:
-        canvas.create_rectangle(x, y, x + data.margin/2, y + data.margin, fill = "green")
-        canvas.create_text(x + data.margin / 4, y + data.margin/2, text = card)
+        canvas.create_image(x, y, image = data.cardsImg[card])
+        '''canvas.create_rectangle(x, y, x + data.margin/2, y + data.margin, fill = "green")
+        canvas.create_text(x + data.margin / 4, y + data.margin/2, text = card)'''
         x += data.margin/2
     
     #waiting for turn
