@@ -825,12 +825,12 @@ def playGameTimerFired(data):
           nextTurn(data)
             
         elif (command == "someoneWon"):
+            data.numPlayed = 0
+            data.roundCards = []
             data.turn = msg[2]
             ### add functinoality of giving points
             if data.turn != data.dictator:
                 data.others[data.turn].addPoints(data)
-            data.numPlayed = 0
-            data.roundCards = []
             
         elif (command == "distributeCards"):
             PID = msg[1]
