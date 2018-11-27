@@ -25,3 +25,30 @@ data.sleekbg = data.sleekbg.resize((1000,700))
 data.sleekbg.save("img/sleekbg.gif")
 '''
 
+'''#starting
+startX = data.width/2 - 6.5 * data.margin
+startY_1 = data.height - 5 * data.margin - data.cardHeight/2 
+startY_2 = data.height - 3 * data.margin - data.cardHeight/2 
+#card dimensions
+cardWidth = data.margin
+cardHeight = 73
+#ending dimensions
+
+#endX = startX + data.startingHand // 2 * cardWidth
+endY_1 = startY_1 + cardHeight
+endY_2 = startY_2 + cardHeight
+print("setup")
+#check if within range:
+for i in range(len(data.me.cards)):
+    endX = startX + cardWidth
+    if i < data.startingHand // 2:
+        print("first")
+        if x >= startX and x <= endX and y >= startY_1 and y <= endY_1:
+            return data.me.cards[i]
+    else:
+        print("second")
+        if x >= startX and x <= endX and y >= startY_2 and y <= endY_2:
+            return data.me.cards[i]
+    startX = endX
+print("out")
+return None'''
