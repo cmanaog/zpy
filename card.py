@@ -10,14 +10,16 @@ class Player(object):
         self.cards = []
         self.cardPos = []
         self.points = 0
-        #self.isDictator = False
+        #player classifications
+        self.isDictator = False
+        self.isAlly = False
         
     def changePID(self, PID):
         self.PID = PID
     
     def drawCard(self, data):
         cardNum = random.randint(0, len(data.cards)-1)
-        print("card to remove", cardNum)
+        #print("card to remove", cardNum)
         #print(data.cards)
         card = data.cards[cardNum]
         self.cards.append(card)
