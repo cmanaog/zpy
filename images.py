@@ -3,10 +3,10 @@ import math
 from tkinter import *
 import copy
 from card import *
-from image_util import *
+#from image_util import *
 
-from PIL import Image
-from resizeimage import resizeimage
+#from PIL import Image
+#from resizeimage import resizeimage
 '''data.cards = [(14,"s"), (14, "c"), (14, "d"),(14, "h"),\
 (2,"s"), (2, "c"), (2, "d"),(2, "h"),\
 (3,"s"), (3, "c"), (3, "d"), (3, "h"),\
@@ -52,3 +52,36 @@ for i in range(len(data.me.cards)):
     startX = endX
 print("out")
 return None'''
+trumpNum = "2"
+trumpSuit = "s"
+cards = ["2s", "3s", "4s", "4h"]
+def isValid(roundCards, card):
+    
+    startHand = roundCards[0]
+    startSuit = startHand[-1] #first suit
+    if startHand[:-1] == trumpNum:
+        startSuit = trumpSuit
+    
+    #following suit, start suit is not trump suit
+    if card[-1] == startSuit and startSuit != trumpSuit and card[:-1] != str(trumpNum):
+        return True
+    
+    
+    
+    #following suit, starting suit is trump suit
+    elif startSuit == trumpSuit and (card[-1] != trumpSuit and card[:-1] != str(trumpNum)):
+        return False
+    
+    #add case where does not have suit
+    else:
+        if startSuit != trumpSuit:
+            for c in cards:
+                if startSuit in c and c[:-1] != str(data.trumpNum):
+                    return False
+        else:
+            for c in cards:
+                if startSuit in c or c[:-1] == str(data.trumpNum):
+                    return False
+    return True
+
+print(isValid(["2s"] ,"4s"))

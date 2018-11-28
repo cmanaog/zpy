@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 32371 #change each time you run, all computers use same host and port
+PORT = 48862 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -39,7 +39,7 @@ from tkinter import *
 import copy
 from images import *
 from card import *
-from image_util import *
+#from image_util import *
 
 from PIL import Image
 from resizeimage import resizeimage
@@ -156,6 +156,8 @@ def init(data):
     data.turn = "Player1"
     data.dictator = None
     data.ally = ""
+    
+    data.startingPlayer = ""
     
     data.allyCardAppear = None
     data.allyCard = ""
@@ -372,9 +374,9 @@ def setupKeyPressed(event, data):
                 data.trumpSuit = card[-1]
                 msg = ""
                 msgDistribute = "distributeCards " + distributeCards(data) + "\n"
-                ##IMPORTANT##
                 data.mode = "dictator"
-                data.turn = data.dictator       
+                data.turn = data.dictator   
+                data.startingPlayer = data.dictator    
         
     # send the message to other players!
     if (msgDic != ""):
@@ -414,6 +416,7 @@ def setupTimerFired(data):
             PID = msg[1]
             card = msg[2]
             data.dictator = PID
+            data.startingPlayer = PID
             data.others[PID].isDictator = True
             data.trumpSuit = card[-1]
             data.cards.remove(card)
@@ -594,9 +597,6 @@ def dictTimerFired(data):
             for card in removeCards:
                 print(card)
                 data.cards.remove(card)
-                
-
-            
             '''except:
                 print("failed")'''
             
@@ -724,36 +724,45 @@ def isValid(data, card):
     if data.numPlayed != 0:
         
         startHand = data.roundCards[0]
+        startNum = int(startHand[:-1])
         startSuit = startHand[-1] #first suit
-        if startHand[:-1] == data.trumpNum:
+        if startNum == data.trumpNum:
+            print("changed suit - start")
             startSuit = data.trumpSuit
+        if card[:-1] == str(data.trumpNum):
+            print("changed suit - card")
+            cardSuit = data.trumpSuit
+        else:
+            cardSuit = card[-1]
         
         #following suit, start suit is not trump suit
-        if card[-1] == startSuit and startSuit != data.trumpSuit and card[:-1] != str(data.trumpNum):
+        if startSuit != data.trumpSuit and cardSuit == startSuit and card[:-1] != str(data.trumpNum):
+            print("start not trump")
+
             return True
+            
+                
         
         #following suit, starting suit is trump suit
-        elif startSuit == data.trumpSuit and (card[-1] == data.trumpSuit or card[:-1] == str(data.trumpNum)):
+        elif startSuit == data.trumpSuit and (cardSuit == data.trumpSuit or card[:-1] == str(data.trumpNum)):
+            print("start not trump")
             return True
         
         #add case where does not have suit
         else:
-            if startSuit != data.trumpSuit:
+            print("does not have")
+            #did not start with trump suit
+            if startSuit != data.trumpSuit and startNum != data.trumpNum:
                 for c in data.me.cards:
                     if startSuit in c and c[:-1] != str(data.trumpNum):
                         return False
-            else:
+            else: #did start with trump suit
                 for c in data.me.cards:
                     if startSuit in c or c[:-1] == str(data.trumpNum):
                         return False
-        return False
-                    
+    print("last")
     return True
     
-
-#may be unnecessary
-'''def givePoints(data, playerPID):
-    return data.others[playerPID].addPoints(card)'''
 
 #checks if ally card is played
 def playedAlly(data, card):
@@ -803,6 +812,7 @@ def playGameMousePressed(event, data):
         nextTurn(data)
         if data.numPlayed == 4:
             data.turn = whoWon(data)
+            data.startingPlayer = data.turn
             if data.turn != data.dictator and data.turn != data.ally:
                 if data.turn == data.me.PID:
                     data.me.addPoints(data)
@@ -812,6 +822,7 @@ def playGameMousePressed(event, data):
             data.numPlayed = 0
             msgWin = "someoneWon " + data.turn + "\n"
             if doneGame(data) != None:
+                data.whoWon = doneGame(data)
                 msgDone = "doneGame " + doneGame(data) + "\n"
         
     # send the message to other players!
@@ -856,6 +867,7 @@ def playGameTimerFired(data):
             
         elif (command == "someoneWon"):
             data.turn = msg[2]
+            data.startingPlayer = msg[2]
             #add points functionality
             if data.turn != data.dictator and data.turn != data.ally:
                 if data.turn == data.me.PID:
@@ -889,6 +901,7 @@ def playGameTimerFired(data):
         
         elif (command == "doneGame"):
             data.whoWon = msg[2]
+            data.mode = "end"
             
       except:
         print("failed")
@@ -929,9 +942,16 @@ def playGameRedrawAll(canvas, data):
     
     #draw Round Cards
     x_r, y_r = data.width/2 - 2 * data.margin - 20, data.height/2 - data.margin
-    for card in data.roundCards:
-        canvas.create_image(x_r, y_r, image = data.cardsImg[card])
+    for i in range(len(data.roundCards)):
+        canvas.create_image(x_r, y_r, image = data.cardsImg[data.roundCards[i]])
+        playerI = ""
+        if i + int(data.startingPlayer[-1]) > 4:
+            playerI = i + int(data.startingPlayer[-1]) - 4
+        else:
+            playerI = i + int(data.startingPlayer[-1])
+        canvas.create_text(x_r, y_r - data.margin, text = playerI, fill = "white", font = "Papyrus")
         x_r += 10 + data.margin
+    
     
     #draw cards
     x,y = data.width/2 - 6 * data.margin, data.height - 5 * data.margin
