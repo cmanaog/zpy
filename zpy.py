@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 48862 #change each time you run, all computers use same host and port
+PORT = 48872 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -324,17 +324,20 @@ def rulesRedrawAll(canvas, data):
 ####################################
 # setup mode
 ####################################
+#if played trump
 def foundTrump(data, card):
     if int(card[:-1]) == data.trumpNum:
         return True
     return False
 
+#goest to next player
 def nextTurn(data):
     if data.turn[-1] == "4":
         data.turn = "Player1"
     else:
         data.turn = "Player" + str(int(data.turn[-1]) + 1)
     
+#distributes cards to players
 def distributeCards(data):
     numShouldHave  = data.startingHand
     currentlyHave = len(data.me.cards)
@@ -367,6 +370,7 @@ def setupKeyPressed(event, data):
             data.cards.remove(card)
             msg = "playerDrew " + card + "\n"
             nextTurn(data)
+            #found trump card
             if foundTrump(data, card):
                 data.dictator = data.me.PID
                 data.me.isDictator = True
@@ -419,9 +423,7 @@ def setupTimerFired(data):
             data.startingPlayer = PID
             data.others[PID].isDictator = True
             data.trumpSuit = card[-1]
-            data.cards.remove(card)
-            #nextTurn(data)
-            #data.mode = "playGame"         
+            data.cards.remove(card)        
  
         elif (command == "playerDrew"):
             PID = msg[1]
@@ -432,18 +434,14 @@ def setupTimerFired(data):
         elif (command == "distributeCards"):
             PID = msg[1]
             removeCards = msg[2:]
-            
-            print("here", removeCards)
+            #remove cards that were drawn
             for card in removeCards:
-                print(card)
                 data.cards.remove(card)
-            print("here2", data.cards)
             nextTurn(data)
+            #need to distribute cards
             if len(data.me.cards) < data.startingHand:
                 data.distribute = True
-                print("here2")
-            
-            #print("My Cards", data.me.cards)
+
             '''except:
                 print("failed")'''
         serverMsg.task_done()
@@ -451,8 +449,7 @@ def setupTimerFired(data):
 #Draws block and text
 def setupRedrawAll(canvas, data):
     canvas.create_image(0,0,anchor=NW, image=data.sleekbg)
-    '''canvas.create_text(data.width/2, data.height/4 - 4 * data.margin,
-                       text="Setup", fill = "white", font="Arial 30 bold")'''
+    
     #instructions
     canvas.create_rectangle(data.width/2 - data.margin, data.height/2 - 5 * data.margin, data.width/2 + data.margin, data.height/2 - 3 * data.margin, fill = "green")
     if data.distribute:
@@ -460,7 +457,6 @@ def setupRedrawAll(canvas, data):
     else:
         txt = "Draw Card"
     canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = txt, fill = "white", font = "Papyrus")
-    #canvas.create_text(data.width/2, data.height/2, text = data.cards, fill = "white")
     
     #draw others
     pos = -1 * math.pi
@@ -481,6 +477,7 @@ def setupRedrawAll(canvas, data):
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
     
+    #Draw waiting for box
     if data.me.PID != data.turn:
         canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 - 5 * data.margin, data.width/2 + 2 * data.margin, data.height/2 - 3 * data.margin, fill = "gray")
         canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Waiting for " + data.turn, font = "Papyrus")
@@ -493,6 +490,7 @@ def setupRedrawAll(canvas, data):
 # Dictator mode
 ####################################
 
+#swaps two cards from pot and hand
 def swap(data, cardDeck, cardHand):
     if data.clickedPot and data.clickedHand:
         print(cardDeck, cardHand)
@@ -503,6 +501,7 @@ def swap(data, cardDeck, cardHand):
         data.clickedPot = False
         data.clickedHand = False
     
+#chooses ally
 def findAllies(data, x, y):
     allies = ["14c", "14d", "14h", "14s"]
     x_1, y_1 = data.width/2 - 4.5 * data.margin - 40, data.height/2 - 2 * data.margin - data.cardHeight/2
@@ -518,6 +517,7 @@ def findAllies(data, x, y):
         x_2 += 10 + data.margin
     return None
 
+#if clicked on pot
 def clickedPot(data, x, y):
     x_r, y_r = data.width/2 - 4.5 * data.margin, data.height/2 - data.cardHeight/2
     for card in data.cards:
@@ -526,6 +526,7 @@ def clickedPot(data, x, y):
         x_r += data.margin  
     return None
 
+#if clicked on personal hand
 def clickedPersonalPot(data, ex, ey):
     x,y = data.width/2 - 6.5 * data.margin, data.height - 4 * data.margin - data.cardHeight/2
     for card in data.me.cards:
@@ -589,7 +590,8 @@ def dictTimerFired(data):
         print("received: ", msg, "\n")
         msg = msg.split()
         command = msg[0]
-
+        
+        #other players drawing cards
         if (command == "distributeCards"):
             PID = msg[1]
             removeCards = msg[2:]
@@ -708,10 +710,12 @@ def isOnCard(data, ex, ey):
     print(ex,ey)
     x,y = data.width/2 - 6.5 * data.margin, data.height - 5 * data.margin - data.cardHeight/2 
     for card in data.me.cards:
+        #first row
         if x >= data.width/2 + 5.5 * data.margin:
             print("here")
             x = data.width/2 - 6.5 * data.margin
             y = data.height - 3 * data.margin - data.cardHeight/2 
+        #second row
         if ex >= x and ex <= x + data.margin and ey >= y and ey <= data.cardHeight + y:
             print(card)
             return card
@@ -726,9 +730,11 @@ def isValid(data, card):
         startHand = data.roundCards[0]
         startNum = int(startHand[:-1])
         startSuit = startHand[-1] #first suit
+        #changes suit to trump
         if startNum == data.trumpNum:
             print("changed suit - start")
             startSuit = data.trumpSuit
+        #changes card suit to trump
         if card[:-1] == str(data.trumpNum):
             print("changed suit - card")
             cardSuit = data.trumpSuit
@@ -774,13 +780,16 @@ def playedAlly(data, card):
 #checks if done game
 def doneGame(data):
     total = 0
+    #sum
     for player in data.others:
         total += data.others[player].points
     
+    #opposition win
     if total >= 80 and data.ally != "":
         data.mode = "end"
         return "Opposition"
     
+    #dictator win
     if total < 80 and len(data.me.cards) == 0:
         data.mode = "end"
         return "Dictator"
@@ -795,32 +804,37 @@ def playGameMousePressed(event, data):
     msgWin = ""
     msgAlly = ""
     msgDone = ""
-    
+    #if clicked on card
     card = isOnCard(data, event.x, event.y)
     if data.turn == data.me.PID and card != None and isValid(data, card):
-        print("here")
         data.me.playCard(card)
+        #if played an ally card
         if playedAlly(data, card):
             if data.allyCardAppear == 0:
                 data.ally = data.me.PID
                 data.me.isAlly = True
                 data.me.points = 0
             msgAlly = "allyIs " + card + "\n"
+        #adds card to round cards and sends to players
         data.roundCards.append(card)
         msg = "playedCard " + card + "\n"
         data.numPlayed += 1
         nextTurn(data)
+        #end of round
         if data.numPlayed == 4:
             data.turn = whoWon(data)
             data.startingPlayer = data.turn
+            #adding points
             if data.turn != data.dictator and data.turn != data.ally:
                 if data.turn == data.me.PID:
                     data.me.addPoints(data)
                 else:
                     data.others[data.turn].addPoints(data)
+            #resets
             data.roundCards = []
             data.numPlayed = 0
             msgWin = "someoneWon " + data.turn + "\n"
+            #checks if done game
             if doneGame(data) != None:
                 data.whoWon = doneGame(data)
                 msgDone = "doneGame " + doneGame(data) + "\n"
@@ -857,7 +871,8 @@ def playGameTimerFired(data):
         print("received: ", msg, "\n")
         msg = msg.split()
         command = msg[0]
-
+        
+        #if player played card
         if (command == "playedCard"):
           playerPID = msg[1]
           card = msg[2]
@@ -865,6 +880,7 @@ def playGameTimerFired(data):
           data.roundCards.append(card) 
           nextTurn(data)
             
+        #if someone wins, resets round
         elif (command == "someoneWon"):
             data.turn = msg[2]
             data.startingPlayer = msg[2]
@@ -884,13 +900,10 @@ def playGameTimerFired(data):
             for card in removeCards:
                 data.cards.remove(card)
         
+        #from dictator
         elif (command == "swapCard"):
             data.cards.remove(msg[2])
             data.cards.append(msg[3])
-        
-        elif (command == "allyCard"):
-            data.allyCardAppear = int(msg[2])
-            data.allyCard = msg[3]
         
         elif (command == "allyIs"):
             data.allyCardAppear -= 1
@@ -899,6 +912,7 @@ def playGameTimerFired(data):
                 data.others[msg[1]].points = 0
                 data.others[msg[1]].isAlly = True
         
+        #finished game
         elif (command == "doneGame"):
             data.whoWon = msg[2]
             data.mode = "end"
@@ -917,7 +931,6 @@ def playGameRedrawAll(canvas, data):
     canvas.create_rectangle(data.width - data.margin * 4 - 10, 10, data.width - 10, data.margin * 3 + 10, fill = "green")
     canvas.create_text(data.width - data.margin * 2, 1.5 * data.margin, text = "Dictator: " + data.dictator + "\nAlly: " + data.ally + "\nAlly Card: " + data.allyCard + "\nTrump Number " + str(data.trumpNum) + "\nTrump Suit " + data.trumpSuit, font = "Papyrus")
     
-    ###Add points UI
     #draw others
     pos = -1 * math.pi
     for player in data.others:
@@ -934,7 +947,9 @@ def playGameRedrawAll(canvas, data):
         else:
             colBox = "blue"
             txtBox = data.others[player].points
+        #Player Name
         canvas.create_text(data.width/2 + 5.5 * data.margin * math.cos(pos),data.height/2 - data.margin + 5.5 * data.margin * math.sin(pos), text = player, fill = col, font = "Papyrus")
+        #Points Box
         canvas.create_rectangle(data.width/2 + 5.5 * data.margin * math.cos(pos) - data.margin/2,  data.height/2 + 6 * data.margin * math.sin(pos) - data.margin/4, data.width/2 + 5.5 * data.margin * math.cos(pos) + data.margin/2, data.height/2 + 6 * data.margin * math.sin(pos) + data.margin/4, fill = colBox, width = 0)
         canvas.create_text(data.width/2 + 5.5 * data.margin * math.cos(pos),  data.height/2 + 6 * data.margin * math.sin(pos), text = txtBox, fill = "white", font = "Papyrus")
         
