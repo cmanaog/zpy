@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 48872 #change each time you run, all computers use same host and port
+PORT = 49185 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -43,6 +43,9 @@ from card import *
 
 from PIL import Image
 from resizeimage import resizeimage
+'''img = Image.open('img/Cards/11h.gif')
+img = img.resize((50,73))
+img.save("img/Cards/11h.gif")'''
 
 ####################################
 # init
@@ -92,6 +95,7 @@ def init(data):
     "13s", "13c", "13d", "13h"]
     #data.cards = ["1s", "1c", "1d", "1h",\
     #"2s", "2c", "2d", "2h"]
+    
     cardsImg = {
         "14c": PhotoImage(file="img/Cards/14c.gif"),
         "14d": PhotoImage(file="img/Cards/14d.gif"),
@@ -161,7 +165,7 @@ def init(data):
     
     data.allyCardAppear = None
     data.allyCard = ""
-    data.allyCardOccur = 0
+    #data.allyCardOccur = 0
     
     data.trumpSuit = None
     data.trumpNum = 2
@@ -451,12 +455,13 @@ def setupRedrawAll(canvas, data):
     canvas.create_image(0,0,anchor=NW, image=data.sleekbg)
     
     #instructions
-    canvas.create_rectangle(data.width/2 - data.margin, data.height/2 - 5 * data.margin, data.width/2 + data.margin, data.height/2 - 3 * data.margin, fill = "green")
+    canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 - 5 * data.margin, data.width/2 + 2 * data.margin, data.height/2 - 4 * data.margin, fill = "green")
     if data.distribute:
         txt = "Draw Rest of Hand!"
     else:
         txt = "Draw Card"
-    canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = txt, fill = "white", font = "Papyrus")
+    canvas.create_text(data.width/2, data.height/2 - 4.6 * data.margin, text = txt, fill = "white", font = "Papyrus 20")
+    canvas.create_text(data.width/2, data.height/2 - 4.2 * data.margin, text = "Press Space", fill = "white", font = "Papyrus 12")
     
     #draw others
     pos = -1 * math.pi
@@ -480,11 +485,11 @@ def setupRedrawAll(canvas, data):
     #Draw waiting for box
     if data.me.PID != data.turn:
         canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 - 5 * data.margin, data.width/2 + 2 * data.margin, data.height/2 - 3 * data.margin, fill = "gray")
-        canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Waiting for " + data.turn, font = "Papyrus")
+        canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Waiting for " + data.turn, font = "Papyrus 20")
         
     #My Label
     canvas.create_rectangle(10, data.height - data.margin - 10, 10 + 2 * data.margin, data.height - 10, fill = "blue")
-    canvas.create_text(10 + data.margin, data.height - data.margin/2 - 10, fill = "white", text = data.me.PID, font = "Papyrus")
+    canvas.create_text(10 + data.margin, data.height - data.margin/2 - 10, fill = "white", text = data.me.PID, font = "Papyrus 20")
   
 ####################################
 # Dictator mode
@@ -504,13 +509,13 @@ def swap(data, cardDeck, cardHand):
 #chooses ally
 def findAllies(data, x, y):
     allies = ["14c", "14d", "14h", "14s"]
-    x_1, y_1 = data.width/2 - 4.5 * data.margin - 40, data.height/2 - 2 * data.margin - data.cardHeight/2
+    x_1, y_1 = data.width/2 - 4.5 * data.margin - 40 + data.margin/2, data.height/2 - 2 * data.margin - data.cardHeight/2
     for card in allies:
         if x >= x_1 and x <= x_1 + data.margin and y >= y_1 and y <= y_1 + data.cardHeight:
             return (1, card)
         x_1 += 10 + data.margin
         
-    x_2, y_2 = data.width/2 - 0.5 * data.margin, data.height/2 - 2 * data.margin - data.cardHeight/2
+    x_2, y_2 = data.width/2 - 0.5 * data.margin + data.margin/2, data.height/2 - 2 * data.margin - data.cardHeight/2
     for card in allies:
         if x >= x_2 and x <= x_2 + data.margin and y >= y_2 and y <= y_2 + data.cardHeight:
             return (2, card)
@@ -519,7 +524,7 @@ def findAllies(data, x, y):
 
 #if clicked on pot
 def clickedPot(data, x, y):
-    x_r, y_r = data.width/2 - 4.5 * data.margin, data.height/2 - data.cardHeight/2
+    x_r, y_r = data.width/2 - 4.5 * data.margin + data.margin/2, data.height/2 - data.cardHeight/2
     for card in data.cards:
         if x >= x_r and x <= x_r + data.margin and y >= y_r and y <= y_r + data.cardHeight:
             return card
@@ -528,10 +533,10 @@ def clickedPot(data, x, y):
 
 #if clicked on personal hand
 def clickedPersonalPot(data, ex, ey):
-    x,y = data.width/2 - 6.5 * data.margin, data.height - 4 * data.margin - data.cardHeight/2
+    x,y = data.width/2 - 6.5 * data.margin + data.margin/2, data.height - 4 * data.margin - data.cardHeight/2
     for card in data.me.cards:
-        if x >= data.width/2 + 4.5 * data.margin:
-            x = data.width/2 - 6.5 * data.margin
+        if x >= data.width/2 + 5.5 * data.margin:
+            x = data.width/2 - 6.5 * data.margin + data.margin/2
             y = data.height - 2 * data.margin - data.cardHeight/2
         if ex >= x and ex <= x + data.margin and ey >= y and ey <= data.cardHeight + y:
             return card
@@ -563,7 +568,7 @@ def dictMousePressed(event, data):
         data.handCard = handPos
         
     #click swap button
-    elif event.x >= data.width/2 - data.margin and event.y >= data.height/2 + 1 * data.margin and event.x <= data.width/2 + data.margin and event.y <= data.height/2 + 2 * data.margin:
+    elif event.x >= data.width/2 - 2 * data.margin and event.y >= data.height/2 + 1 * data.margin and event.x <= data.width/2 + 2 * data.margin and event.y <= data.height/2 + 2 * data.margin:
         swap(data, data.potCard, data.handCard)
         msg = "swapCard " + data.potCard + " " + data.handCard + "\n"
     
@@ -617,13 +622,13 @@ def dictRedrawAll(canvas, data):
     
     #draw ally choices
     allies = ["14c", "14d", "14h", "14s"]
-    x_1, y_1 = data.width/2 - 4 * data.margin - 40, data.height/2 - 2 * data.margin
+    x_1, y_1 = data.width/2 - 4 * data.margin - 40 + data.margin/2, data.height/2 - 2 * data.margin
     for card in allies:
         canvas.create_text(x_1, y_1 - 40, text = "First", fill = "white", font = "Papyrus")
         canvas.create_image(x_1, y_1, image = data.cardsImg[card])
         x_1 += 10 + data.margin
     
-    x_2, y_2 = data.width/2, data.height/2 - 2 * data.margin
+    x_2, y_2 = data.width/2 + data.margin/2, data.height/2 - 2 * data.margin
     for card in allies:
         canvas.create_text(x_2, y_2 - 40, text = "Second", fill = "white", font = "Papyrus")
         canvas.create_image(x_2, y_2, image = data.cardsImg[card])
@@ -631,23 +636,24 @@ def dictRedrawAll(canvas, data):
         
     #draw pot
     if len(data.cards) == 8:
-        x_r, y_r = data.width/2 - 4 * data.margin, data.height/2 
+        x_r, y_r = data.width/2 - 4 * data.margin + data.margin/2, data.height/2 
         for card in data.cards:
             canvas.create_image(x_r, y_r, image = data.cardsImg[card])
             x_r += data.margin
     else:
-        canvas.create_rectangle(data.width/2 - 2.5 * data.margin, data.height/2, data.width/2 + 2.5 * data.margin, data.height/2 + data.margin, fill = "gray")
-        canvas.create_text(data.width/2, data.height/2 + 0.5 * data.margin, text = "Waiting for other players", fill = "white", font = "Papyrus 20")
+        canvas.create_rectangle(data.width/2 - 2.5 * data.margin, data.height/2 - data.margin/2, data.width/2 + 2.5 * data.margin, data.height/2 + data.margin/2, fill = "gray")
+        canvas.create_text(data.width/2, data.height/2, text = "Waiting for other players", fill = "white", font = "Papyrus 20")
         
     #Swap Button
-    canvas.create_rectangle(data.width/2 - data.margin, data.height/2 + 1 * data.margin, data.width/2 + data.margin, data.height/2 + 2 * data.margin, fill = "green")
-    canvas.create_text(data.width/2, data.height/2 + 1.5 * data.margin, text = "SWAP", fill = "white", font = "Papyrus 20")
+    canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 + 1 * data.margin, data.width/2 + 2 * data.margin, data.height/2 + 2 * data.margin, fill = "green")
+    canvas.create_text(data.width/2, data.height/2 + 1.4 * data.margin, text = "SWAP", fill = "white", font = "Papyrus 15")
+    canvas.create_text(data.width/2, data.height/2 + 1.75 * data.margin, text = "Click Card from Pot and Hand", fill = "white", font = "Papyrus 12")
     
     #draw personal cards
-    x,y = data.width/2 - 6 * data.margin, data.height - 4 * data.margin
+    x,y = data.width/2 - 6 * data.margin + data.margin/2, data.height - 4 * data.margin
     for card in data.me.cards:
-        if x >= data.width/2 + 5 * data.margin:
-            x = data.width/2 - 6 * data.margin
+        if x >= data.width/2 + 6 * data.margin + data.margin/2:
+            x = data.width/2 - 6 * data.margin + data.margin/2
             y = data.height - 2 * data.margin
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
@@ -708,12 +714,12 @@ def winningPlayer(data, i):
 #clicked on card
 def isOnCard(data, ex, ey):
     print(ex,ey)
-    x,y = data.width/2 - 6.5 * data.margin, data.height - 5 * data.margin - data.cardHeight/2 
+    x,y = data.width/2 - 6.5 * data.margin + data.margin/2, data.height - 5 * data.margin - data.cardHeight/2 
     for card in data.me.cards:
         #first row
-        if x >= data.width/2 + 5.5 * data.margin:
+        if x >= data.width/2 + 5.5 * data.margin + data.margin/2:
             print("here")
-            x = data.width/2 - 6.5 * data.margin
+            x = data.width/2 - 6.5 * data.margin + data.margin/2
             y = data.height - 3 * data.margin - data.cardHeight/2 
         #second row
         if ex >= x and ex <= x + data.margin and ey >= y and ey <= data.cardHeight + y:
@@ -744,9 +750,7 @@ def isValid(data, card):
         #following suit, start suit is not trump suit
         if startSuit != data.trumpSuit and cardSuit == startSuit and card[:-1] != str(data.trumpNum):
             print("start not trump")
-
             return True
-            
                 
         
         #following suit, starting suit is trump suit
@@ -810,7 +814,9 @@ def playGameMousePressed(event, data):
         data.me.playCard(card)
         #if played an ally card
         if playedAlly(data, card):
+            print("played ally")
             if data.allyCardAppear == 0:
+                print("ally")
                 data.ally = data.me.PID
                 data.me.isAlly = True
                 data.me.points = 0
@@ -905,6 +911,10 @@ def playGameTimerFired(data):
             data.cards.remove(msg[2])
             data.cards.append(msg[3])
         
+        elif (command == "allyCard"):
+            data.allyCardAppear = int(msg[2])
+            data.allyCard = msg[3]
+            
         elif (command == "allyIs"):
             data.allyCardAppear -= 1
             if data.allyCardAppear == 0:
@@ -969,11 +979,11 @@ def playGameRedrawAll(canvas, data):
     
     
     #draw cards
-    x,y = data.width/2 - 6 * data.margin, data.height - 5 * data.margin
+    x,y = data.width/2 - 6 * data.margin + data.margin/2, data.height - 5 * data.margin
     for card in data.me.cards:
         #print(x,y)
-        if x >= data.width/2 + 6 * data.margin:
-            x = data.width/2 - 6 * data.margin
+        if x >= data.width/2 + 6 * data.margin + data.margin/2:
+            x = data.width/2 - 6 * data.margin + data.margin/2
             y = data.height - 3 * data.margin
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
@@ -981,7 +991,10 @@ def playGameRedrawAll(canvas, data):
     #waiting for turn
     if data.me.PID != data.turn:
         canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 - 5 * data.margin, data.width/2 + 2 * data.margin, data.height/2 - 3 * data.margin, fill = "gray")
-        canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Waiting for " + data.turn, fill = "white", font = "Papyrus")
+        canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Waiting for " + data.turn, fill = "white", font = "Papyrus 20")
+    else:
+        canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 - 5 * data.margin, data.width/2 + 2 * data.margin, data.height/2 - 3 * data.margin, fill = "green")
+        canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Play a Card!", fill = "white", font = "Papyrus 20")
     
     #My Score
     if data.me.isDictator:
@@ -992,13 +1005,13 @@ def playGameRedrawAll(canvas, data):
         txt = "Ally"
     else:
         col = "blue"
-        txt = "My Score: " + str(data.me.points)
+        txt = "Score: " + str(data.me.points)
     canvas.create_rectangle(data.width - 2 * data.margin - 10, data.height - data.margin - 10, data.width - 10, data.height - 10, fill = col)
-    canvas.create_text(data.width - data.margin - 10, data.height - data.margin/2 - 10, fill = "white", text = txt, font = "Papyrus")
+    canvas.create_text(data.width - data.margin - 10, data.height - data.margin/2 - 10, fill = "white", text = txt, font = "Papyrus 20")
     
     #My Label
     canvas.create_rectangle(10, data.height - data.margin - 10, 10 + 2 * data.margin, data.height - 10, fill = "blue")
-    canvas.create_text(10 + data.margin, data.height - data.margin/2 - 10, fill = "white", text = data.me.PID, font = "Papyrus")
+    canvas.create_text(10 + data.margin, data.height - data.margin/2 - 10, fill = "white", text = data.me.PID, font = "Papyrus 20")
                        
 ####################################
 # end mode

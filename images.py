@@ -3,11 +3,11 @@ import math
 from tkinter import *
 import copy
 from card import *
-#from image_util import *
+from image_util import *
 
-#from PIL import Image
-#from resizeimage import resizeimage
-'''data.cards = [(14,"s"), (14, "c"), (14, "d"),(14, "h"),\
+from PIL import Image
+from resizeimage import resizeimage
+cards = [(14,"s"), (14, "c"), (14, "d"),(14, "h"),\
 (2,"s"), (2, "c"), (2, "d"),(2, "h"),\
 (3,"s"), (3, "c"), (3, "d"), (3, "h"),\
 (4,"s"), (4, "c"), (4, "d"), (4, "h"),\
@@ -20,38 +20,11 @@ from card import *
 (11,"s"), (11, "c"), (11, "d"), (11, "h"),\
 (12,"s"), (12, "c"), (11, "d"), (11, "h"),\
 (13,"s"), (13, "c"), (13, "d"), (13, "h")]
-data.sleekbg = Image.open('img/sleekbg.gif')
-data.sleekbg = data.sleekbg.resize((1000,700))
-data.sleekbg.save("img/sleekbg.gif")
-'''
+img = Image.open('img/Cards/11h.gif')
+img = img.resize((50,73))
+img.save("img/Cards/11h.gif")
 
-'''#starting
-startX = data.width/2 - 6.5 * data.margin
-startY_1 = data.height - 5 * data.margin - data.cardHeight/2 
-startY_2 = data.height - 3 * data.margin - data.cardHeight/2 
-#card dimensions
-cardWidth = data.margin
-cardHeight = 73
-#ending dimensions
 
-#endX = startX + data.startingHand // 2 * cardWidth
-endY_1 = startY_1 + cardHeight
-endY_2 = startY_2 + cardHeight
-print("setup")
-#check if within range:
-for i in range(len(data.me.cards)):
-    endX = startX + cardWidth
-    if i < data.startingHand // 2:
-        print("first")
-        if x >= startX and x <= endX and y >= startY_1 and y <= endY_1:
-            return data.me.cards[i]
-    else:
-        print("second")
-        if x >= startX and x <= endX and y >= startY_2 and y <= endY_2:
-            return data.me.cards[i]
-    startX = endX
-print("out")
-return None'''
 trumpNum = "2"
 trumpSuit = "s"
 cards = ["2s", "3s", "4s", "4h"]
@@ -84,4 +57,3 @@ def isValid(roundCards, card):
                     return False
     return True
 
-print(isValid(["2s"] ,"4s"))
