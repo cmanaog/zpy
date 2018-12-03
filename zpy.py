@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 14664 #change each time you run, all computers use same host and port
+PORT = 10022 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -1008,6 +1008,7 @@ def playGameMousePressed(event, data):
     elif data.playPairs and data.turn == data.me.PID and isOnCard(data, event.x, event.y) != None:
         card = isOnCard(data, event.x, event.y)
         data.indivPairs.append(card)
+        print(data.indivPairs)
         if len(data.indivPairs) == 2:
             if isValidPairs(data, data.indivPairs):
                 msg = "playedPair " + data.indivPairs[0] + " " + data.indivPairs[1] + "\n"
@@ -1018,22 +1019,14 @@ def playGameMousePressed(event, data):
                 data.numPlayed += 1
                 nextTurn(data)
                 data.validCard = True
-                if playedAlly(data, data.indivPairs[0]):
+                if playedAlly(data, data.indivPairs[0]) or playedAlly(data, data.indivPairs[1]):
                     print("played ally")
                     if data.allyCardAppear == 0:
                         print("ally")
                         data.ally = data.me.PID
                         data.me.isAlly = True
                         data.me.points = 0
-                        msgAlly = "allyIs " + data.indivPairs[0] + "\n"
-                if playedAlly(data, data.indivPairs[1]):
-                    print("played ally")
-                    if data.allyCardAppear == 0:
-                        print("ally")
-                        data.ally = data.me.PID
-                        data.me.isAlly = True
-                        data.me.points = 0
-                        msgAlly = "allyIs " + data.indivPairs[1] + "\n"
+                        msgAlly = "allyIs " + data.allyCard + "\n"
             else:
                 data.validCard = False
                 data.indivPairs = []
@@ -1073,7 +1066,7 @@ def playGameMousePressed(event, data):
             whoWon(data)
             isPair = False
             pairs = []
-            data.indivPairs = []
+            data.indivPairs.clear()
         #adding points
         points(data, isPair, pairs)
         msgWin = "someoneWon " + data.turn + "\n"
@@ -1106,6 +1099,7 @@ def playGameKeyPressed(event, data):
         data.roundCards = []
         data.playPairs = False
         data.pairs = []
+        data.indivPairs.clear()
         data.endRound = False
         data.numPlayed = 0
         data.startingPlayer = data.me.PID
@@ -1137,11 +1131,11 @@ def playGameTimerFired(data):
         elif (command == "continue"):
             data.endRound = False
             data.numPlayed = 0
-            data.roundCards = []
-            data.startingPlayer = data.turn
+            data.roundCards.clear()
             data.playPairs = False
-            data.pairs = []
-            data.indivPairs = []
+            data.pairs.clear()
+            data.indivPairs.clear()
+            data.startingPlayer = data.turn
             
         elif (command == "playedPair"):
             data.playPairs = True
@@ -1244,6 +1238,12 @@ def playGameRedrawAll(canvas, data):
     else:
         x_r, y_r = data.width/2 - 4 * data.margin - 40 + data.margin/2, data.height/2 - data.margin
         for i in range(len(data.pairs)):
+            playerI = ""
+            if i + int(data.startingPlayer[-1]) > 4:
+                playerI = i + int(data.startingPlayer[-1]) - 4
+            else:
+                playerI = i + int(data.startingPlayer[-1])
+            canvas.create_text(x_r + 5 + data.margin/2, y_r - data.margin, text = playerI, fill = "white", font = "Papyrus")
             card1 = data.pairs[i][0]
             card2 = data.pairs[i][1]
             canvas.create_image(x_r, y_r, image = data.cardsImg[card1])
@@ -1263,7 +1263,7 @@ def playGameRedrawAll(canvas, data):
                     coords.append([x,y])
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
-
+    #Border around clicked cards
     if len(data.indivPairs) != 0 and data.turn == data.me.PID and not data.endRound and len(coords) != 0:
         canvas.create_rectangle(coords[0][0] - data.margin/2 - 3, coords[0][1] - data.cardHeight/2 - 3, coords[0][0] + data.margin/2 + 3, coords[0][1] + data.cardHeight/2 + 3, fill = data.yellow, width = 0)
         canvas.create_image(coords[0][0], coords[0][1], image = data.cardsImg[data.indivPairs[0]])
