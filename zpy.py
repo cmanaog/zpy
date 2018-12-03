@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 49195 #change each time you run, all computers use same host and port
+PORT = 14664 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -39,7 +39,6 @@ from tkinter import *
 import copy
 from images import *
 from card import *
-#from image_util import *
 
 from PIL import Image
 from resizeimage import resizeimage
@@ -60,6 +59,7 @@ def init(data):
     data.labelCol = rgbString(137,91,78) #old blue
     data.turnCol = rgbString(212,235,179) #old red
     data.errCol = rgbString(27,46,24) #old gray
+    data.yellow = rgbString(255, 204, 0) #dictator yellow
     
     # Game Mode
     data.mode = "start"
@@ -102,6 +102,8 @@ def init(data):
     "11s", "11c", "11d", "11h",\
     "12s", "12c", "12d", "12h",\
     "13s", "13c", "13d", "13h"]
+    
+    data.bgCards = copy.deepcopy(data.cards)
     
     cardsImg = {
         "14c": PhotoImage(file="img/Cards/14c.gif"),
@@ -158,9 +160,54 @@ def init(data):
         "2s": PhotoImage(file="img/Cards/2s.gif")
     
     }
+    #card information
+    data.startingHand = 24
     data.cardsImg = cardsImg
     data.cardHeight = 73
     
+    #distribute card/setup
+    data.distribute = False
+    
+    #round information
+    data.roundCards = []
+    data.endRound = False
+    data.startSuit = ""
+    data.turn = "Player1"
+    data.startingPlayer = ""
+    data.validCard = True
+    #number of players that have gone in a round 
+    data.numPlayed = 0
+    
+    #Player information
+    data.dictator = None
+    data.ally = ""
+    
+    #trump information
+    data.trumpSuit = None
+    data.trumpNum = 2
+    
+    #ally card information
+    data.allyCardAppear = 0
+    data.allyCard = ""
+    data.allyCardOccur = 0
+    
+    #dictator Swaps
+    data.clickedPot = False
+    data.potCard = None
+    data.clickedHand = False
+    data.handCard = None
+    data.swap = False
+    
+    #winning
+    data.whoWon = ""
+    
+    #pairs/new stuff
+    data.playPairs = False
+    data.indivPairs = []
+    data.pairs = []
+
+def resets(data):
+    data.cards = copy.deepcopy(data.bgCards)
     data.roundCards = []
     data.endRound = False
     data.startSuit = ""
@@ -177,13 +224,8 @@ def init(data):
     data.allyCardOccur = 0
     
     data.trumpSuit = None
-    data.trumpNum = 2
-    
+    data.trumpNum += 1
     data.distribute = False
-    
-    #opposition 
-    data.startingHand = 24
-    data.points = 0
     
     #numebr of players that have gone in a round 
     data.numPlayed = 0
@@ -197,7 +239,12 @@ def init(data):
     
     #winning
     data.whoWon = ""
- 
+    
+    #pairs/new stuff
+    data.playPairs = False
+    data.indivPairs = []
+    data.pairs = []
+    
 
 ####################################
 # mode dispatcher
@@ -259,8 +306,7 @@ def startMousePressed(event, data):
 
 #switches to game mode
 def startKeyPressed(event, data):
-    if (event.keysym == "p"):
-        data.mode = "playGame"
+    pass
 
 #incrememnts moving block based off time 
 def startTimerFired(data):
@@ -644,19 +690,30 @@ def dictRedrawAll(canvas, data):
     
     #draw ally choices
     allies = ["14c", "14d", "14h", "14s"]
+    xa, ya = 0,0
     x_1, y_1 = data.width/2 - 4 * data.margin - 40 + data.margin/2, data.height/2 - 2 * data.margin
     for card in allies:
         canvas.create_text(x_1, y_1 - 40, text = "First", fill = "white", font = "Papyrus")
+        if data.allyCardOccur == 1 and data.allyCard == card:
+            xa, ya = x_1, y_1
         canvas.create_image(x_1, y_1, image = data.cardsImg[card])
         x_1 += 10 + data.margin
     
     x_2, y_2 = data.width/2 + data.margin/2, data.height/2 - 2 * data.margin
     for card in allies:
         canvas.create_text(x_2, y_2 - 40, text = "Second", fill = "white", font = "Papyrus")
+        if data.allyCardOccur == 2 and data.allyCard == card:
+            xa, ya = x_2, y_2
         canvas.create_image(x_2, y_2, image = data.cardsImg[card])
         x_2 += 10 + data.margin
+    
+    #border around ally card
+    if data.allyCard != "":
+        canvas.create_rectangle(xa - 3 - data.margin/2, ya - 3 - data.cardHeight/2, xa + 3 + data.margin/2, ya + data.cardHeight/2 + 3, fill = "yellow", width = 0)
+        canvas.create_image(xa, ya, image = data.cardsImg[data.allyCard])
         
-    #draw pot
+    
+    #draw pot  
     if len(data.cards) == 8:
         x_r, y_r = data.width/2 - 4 * data.margin + data.margin/2, data.height/2 
         for card in data.cards:
@@ -666,19 +723,35 @@ def dictRedrawAll(canvas, data):
         canvas.create_rectangle(data.width/2 - 2.5 * data.margin, data.height/2 - data.margin/2, data.width/2 + 2.5 * data.margin, data.height/2 + data.margin/2, fill = data.errCol)
         canvas.create_text(data.width/2, data.height/2, text = "Waiting for other players", fill = "white", font = "Papyrus 20")
         
+    #border around clicked Pot Card
+    if data.clickedPot:
+        i = data.cards.index(data.potCard)
+        x = data.width/2 - 4 * data.margin + data.margin * i - 3
+        y = data.height/2 - data.cardHeight // 2 - 3
+        canvas.create_rectangle(x, y, x + 6 + data.margin, y + data.cardHeight + 6, fill = "yellow", width = 0)
+        canvas.create_image(x + 3 + data.margin/2, y + 3 + data.cardHeight/2, image = data.cardsImg[data.potCard])
+        
     #Swap Button
     canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 + 1 * data.margin, data.width/2 + 2 * data.margin, data.height/2 + 2 * data.margin, fill = data.instructCol)
     canvas.create_text(data.width/2, data.height/2 + 1.4 * data.margin, text = "SWAP", fill = "white", font = "Papyrus 15")
     canvas.create_text(data.width/2, data.height/2 + 1.75 * data.margin, text = "Click Card from Pot and Hand", fill = "white", font = "Papyrus 12")
     
     #draw personal cards
+    xp, yp = 0, 0
     x,y = data.width/2 - 6 * data.margin + data.margin/2, data.height - 4 * data.margin
     for card in data.me.cards:
         if x >= data.width/2 + 6 * data.margin + data.margin/2:
             x = data.width/2 - 6 * data.margin + data.margin/2
             y = data.height - 2 * data.margin
+        if card == data.handCard:
+            xp, yp = x, y
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
+    
+    #border around clicked Hand
+    if data.clickedHand:
+        canvas.create_rectangle(xp - 3 - data.margin/2, yp - 3 - data.cardHeight/2, xp + 3 + data.margin/2, yp + data.cardHeight/2 + 3, fill = "yellow", width = 0)
+        canvas.create_image(xp, yp, image = data.cardsImg[data.handCard])
         
     #Finish Button
     canvas.create_rectangle(data.width - data.margin - 10, data.height - data.margin - 10, data.width - 10, data.height - 10, fill = data.labelCol)
@@ -699,11 +772,11 @@ def dictRedrawAll(canvas, data):
 
 #given array of hands from the round, determine who wins
 def whoWon(data):
+    print("roundCards", data.roundCards)
     winningHand = data.roundCards[0]
     winningSuit = data.roundCards[0][-1] #first suit
     winningRank = int(data.roundCards[0][:-1]) #first rank
     winningIndex = 0
-    print("roundCards", data.roundCards)
     for i in range(1, len(data.roundCards)):
         currRank = int(data.roundCards[i][:-1])
         currSuit = data.roundCards[i][-1]
@@ -733,7 +806,7 @@ def whoWon(data):
             winningHand = str(winningRank) + winningSuit
         print(winningIndex)
     data.numPlayed = 0
-    return winningPlayer(data, winningIndex)
+    winningPlayer(data, winningIndex)
 
 #determines who won
 def winningPlayer(data, i):
@@ -741,7 +814,19 @@ def winningPlayer(data, i):
     winningPlayer = startingPlayer + i
     if winningPlayer > 4:
         winningPlayer -= 4
-    return "Player" + str(winningPlayer)
+    data.turn = "Player" + str(winningPlayer)
+
+def whoWonPairs(data):
+    data.pairs = copy.deepcopy(data.roundCards) #copy of cards for points
+    for i in range(len(data.roundCards)):
+        print("Pair: ", data.roundCards[i])
+        if data.roundCards[i][0] == data.roundCards[i][1]:
+            data.roundCards[i] = data.roundCards[i][0]
+        else:
+            data.roundCards[i] = "00" #auto loss
+    #print(data.roundCards)
+    whoWon(data)
+    return data.pairs
 
 #clicked on card
 def isOnCard(data, ex, ey):
@@ -804,6 +889,54 @@ def isValid(data, card):
     print("last")
     return True
     
+def isValidPairs(data, pair):
+    print("Testing Validity for ", pair)
+    if data.numPlayed == 0:
+        print("First Play")
+        return pair[0] == pair[1]
+    else:
+        startHand = data.roundCards[0][0]
+        startNum = int(startHand[:-1])
+        startSuit = startHand[-1]
+        #in case trump num
+        if startNum == data.trumpNum:
+            startSuit = data.trumpSuit
+          
+        #Following suit, actual pair (played pair is not trump number)
+        if pair[0] == pair[1] and pair[0][-1] == startSuit and pair[0][:-1] != data.trumpNum:
+            print("follow suit, actual pair")
+            return True
+        #Following suit, actual pair (is trump suit)
+        elif startSuit == data.trumpSuit and pair[0] == pair[1] and int(pair[0][:-1]) == data.trumpNum:
+            print("trump num pair")
+            return True
+        #Changes trump nums to fit suit
+        copyCards = copy.deepcopy(data.me.cards)
+        for c in copyCards:
+            if c[:-1] == str(data.trumpNum):
+                c = c[:-1] + data.trumpSuit
+        for c in pair:
+            if c[:-1] == str(data.trumpNum):
+                c = c[:-1] + data.trumpSuit
+        print("modified my cards ", copyCards)
+        print("modified pair ", pair)
+        suitCards = [card for card in copyCards if card[-1] == startSuit]
+        print("len cards ", suitCards)
+        if len(suitCards) != len(set(suitCards)):
+            print("pair exists")
+            return False
+        else:
+            pairSuitFollow = [c for c in pair if c[-1] == startSuit]
+            print("pair suit follow ", pairSuitFollow)
+            if len(suitCards) >= 2 and len(pairSuitFollow) == 2:
+                return True
+            elif len(suitCards) == 1 and len(pairSuitFollow) == 1:
+                return True
+            elif len(suitCards) == 0:
+                return True
+            else:
+                return False
+            
 
 #checks if ally card is played
 def playedAlly(data, card):
@@ -811,27 +944,53 @@ def playedAlly(data, card):
         data.allyCardAppear -= 1
         return True
     return False
-    
+
+def points(data, isPair = False, pairs = []):
+    if data.turn != data.dictator and data.turn != data.ally:
+        if data.turn == data.me.PID:
+            if isPair:
+                data.me.addPointsPairs(data, pairs)
+            else:
+                data.me.addPoints(data)
+        else:
+            if isPair:
+                data.others[data.turn].addPointsPairs(data, pairs)
+            else:
+                data.others[data.turn].addPoints(data)
+    return None
+
+def lastPot(data):
+    data.roundCards = copy.deepcopy(data.cards)
+    points(data)
+    points(data)
+    return None   
+
 #checks if done game
 def doneGame(data):
     total = 0
+    #end game
+    if len(data.me.cards) == 0:
+        lastPot(data)
     #sum
     for player in data.others:
         total += data.others[player].points
     
-    #opposition win
+    #opposition win, early on
     if total >= 80 and data.ally != "":
         data.mode = "end"
         return "Opposition"
-    
-    #dictator win
+        
     if total < 80 and len(data.me.cards) == 0:
         data.mode = "end"
         return "Dictator"
     
+    elif total >= 80 and len(data.me.cards) == 0:
+        data.mode = "end"
+        return "Opposition"
+    
     else:
         return None
-        
+
     
 #determines what happens if user clicks mouse
 def playGameMousePressed(event, data):
@@ -839,12 +998,57 @@ def playGameMousePressed(event, data):
     msgWin = ""
     msgAlly = ""
     msgDone = ""
-    #if clicked on card
+    
+    #clicked pairs button
+    if event.x >= data.width/2 - data.margin and event.y >= data.height - 2 * data.margin and event.x <= data.width/2 + data.margin and event.y <= data.height - 1.5 * data.margin and data.numPlayed == 0:
+        data.playPairs = not data.playPairs
+        print(data.playPairs)
+    
+    #play Pairs
+    elif data.playPairs and data.turn == data.me.PID and isOnCard(data, event.x, event.y) != None:
+        card = isOnCard(data, event.x, event.y)
+        data.indivPairs.append(card)
+        if len(data.indivPairs) == 2:
+            if isValidPairs(data, data.indivPairs):
+                msg = "playedPair " + data.indivPairs[0] + " " + data.indivPairs[1] + "\n"
+                data.roundCards.append(data.indivPairs)
+                data.me.playCard(data.indivPairs[0])
+                data.me.playCard(data.indivPairs[1])
+                data.pairs.append(data.indivPairs)
+                data.numPlayed += 1
+                nextTurn(data)
+                data.validCard = True
+                if playedAlly(data, data.indivPairs[0]):
+                    print("played ally")
+                    if data.allyCardAppear == 0:
+                        print("ally")
+                        data.ally = data.me.PID
+                        data.me.isAlly = True
+                        data.me.points = 0
+                        msgAlly = "allyIs " + data.indivPairs[0] + "\n"
+                if playedAlly(data, data.indivPairs[1]):
+                    print("played ally")
+                    if data.allyCardAppear == 0:
+                        print("ally")
+                        data.ally = data.me.PID
+                        data.me.isAlly = True
+                        data.me.points = 0
+                        msgAlly = "allyIs " + data.indivPairs[1] + "\n"
+            else:
+                data.validCard = False
+                data.indivPairs = []
+        
     card = isOnCard(data, event.x, event.y)
-    valid = isValid(data, card)
-    if data.turn == data.me.PID and card != None and valid and not data.endRound:
+        
+    #if clicked on card
+    if not data.playPairs and data.turn == data.me.PID and card != None and isValid(data, card) and not data.endRound:
         data.validCard = True
         data.me.playCard(card)
+        #adds card to round cards and sends to players
+        data.roundCards.append(card)
+        msg = "playedCard " + card + "\n"
+        data.numPlayed += 1
+        nextTurn(data)
         #if played an ally card
         if playedAlly(data, card):
             print("played ally")
@@ -853,31 +1057,31 @@ def playGameMousePressed(event, data):
                 data.ally = data.me.PID
                 data.me.isAlly = True
                 data.me.points = 0
-            msgAlly = "allyIs " + card + "\n"
-        #adds card to round cards and sends to players
-        data.roundCards.append(card)
-        msg = "playedCard " + card + "\n"
-        data.numPlayed += 1
-        nextTurn(data)
-        #end of round
-        if data.numPlayed == 4:
-            data.endRound = True
-            data.turn = whoWon(data)
-            msgWin = "someoneWon " + data.turn + "\n"
-            #adding points
-            if data.turn != data.dictator and data.turn != data.ally:
-                if data.turn == data.me.PID:
-                    data.me.addPoints(data)
-                else:
-                    data.others[data.turn].addPoints(data)
-            #checks if done game
-            if doneGame(data) != None:
-                data.whoWon = doneGame(data)
-                msgDone = "doneGame " + doneGame(data) + "\n"
-    elif not valid:
+                msgAlly = "allyIs " + card + "\n"
+        
+        
+    elif not data.playPairs and not isValid(data, card):
         data.validCard = False
         
-        
+    #end of round
+    if data.numPlayed == 4:
+        data.endRound = True
+        if data.playPairs:
+            pairs = whoWonPairs(data)
+            isPair = True
+        else:
+            whoWon(data)
+            isPair = False
+            pairs = []
+            data.indivPairs = []
+        #adding points
+        points(data, isPair, pairs)
+        msgWin = "someoneWon " + data.turn + "\n"
+        #checks if done game
+        if doneGame(data) != None:
+            data.whoWon = doneGame(data)
+            msgDone = "doneGame " + doneGame(data) + "\n"        
+            
     # send the message to other players!
     if (msg != ""):
         print ("sending: ", msg,)
@@ -900,54 +1104,60 @@ def playGameKeyPressed(event, data):
     if event.keysym == "space" and data.endRound and data.turn == data.me.PID:
         #resets
         data.roundCards = []
+        data.playPairs = False
+        data.pairs = []
         data.endRound = False
         data.numPlayed = 0
         data.startingPlayer = data.me.PID
         msg = "continue " + str(data.endRound) + "\n"
-
             
     # send the message to other players!
     if (msg != ""):
         print ("sending: ", msg,)
         data.server.send(msg.encode()) 
  
-
-    
 #what happens every time delay
 def playGameTimerFired(data):
     # timerFired receives instructions and executes them
     while (serverMsg.qsize() > 0):
-      msg = serverMsg.get(False)
-      try:
+        msg = serverMsg.get(False)
+        #try:
         print("received: ", msg, "\n")
         msg = msg.split()
         command = msg[0]
         
         #if player played card
         if (command == "playedCard"):
-          playerPID = msg[1]
-          card = msg[2]
-          data.numPlayed += 1
-          data.roundCards.append(card) 
-          nextTurn(data)
+            playerPID = msg[1]
+            card = msg[2]
+            data.numPlayed += 1
+            data.roundCards.append(card) 
+            nextTurn(data)
         
         elif (command == "continue"):
+            data.endRound = False
             data.numPlayed = 0
             data.roundCards = []
             data.startingPlayer = data.turn
-            data.endRound = False
+            data.playPairs = False
+            data.pairs = []
+            data.indivPairs = []
             
+        elif (command == "playedPair"):
+            data.playPairs = True
+            playerPID = msg[1]
+            pair = [msg[2], msg[3]]
+            data.numPlayed += 1
+            data.roundCards.append(pair)
+            data.pairs.append(pair)
+            nextTurn(data)
+                
         #if someone wins, resets round
         elif (command == "someoneWon"):
             data.turn = msg[2]
             data.endRound = True
             #add points functionality
-            if data.turn != data.dictator and data.turn != data.ally:
-                if data.turn == data.me.PID:
-                    data.me.addPoints(data)
-                else:
-                    data.others[data.turn].addPoints(data)
-            
+            points(data, data.playPairs, data.pairs)  
             
         elif (command == "distributeCards"):
             PID = msg[1]
@@ -978,9 +1188,9 @@ def playGameTimerFired(data):
             data.whoWon = msg[2]
             data.mode = "end"
             
-      except:
-        print("failed")
-      serverMsg.task_done()    
+        #except:
+            #print("failed")
+        serverMsg.task_done()    
     pass
 
 
@@ -1004,7 +1214,7 @@ def playGameRedrawAll(canvas, data):
         else:
             col = "white"
         if data.dictator == player:
-            colBox = rgbString(255, 204, 0)
+            colBox = data.yellow
             txtBox = "Dictator"
         elif data.ally == player:
             colBox = "orange"
@@ -1013,33 +1223,50 @@ def playGameRedrawAll(canvas, data):
             colBox = data.labelCol
             txtBox = data.others[player].points
         #Player Name
-        canvas.create_text(data.width/2 + 5.5 * data.margin * math.cos(pos),data.height/2 - data.margin + 5.25 * data.margin * math.sin(pos) - 10, text = player, fill = col, font = "Papyrus 20")
+        canvas.create_text(data.width/2 + 6 * data.margin * math.cos(pos),data.height/2 - data.margin + 5.25 * data.margin * math.sin(pos) - 10, text = player, fill = col, font = "Papyrus 20")
         #Points Box
-        canvas.create_rectangle(data.width/2 + 5.5 * data.margin * math.cos(pos) - data.margin/2,  data.height/2 + 5.75 * data.margin * math.sin(pos) - data.margin/4, data.width/2 + 5.5 * data.margin * math.cos(pos) + data.margin/2, data.height/2 + 5.75 * data.margin * math.sin(pos) + data.margin/4, fill = colBox, width = 0)
-        canvas.create_text(data.width/2 + 5.5 * data.margin * math.cos(pos),  data.height/2 + 5.75 * data.margin * math.sin(pos), text = txtBox, fill = "white", font = "Papyrus")
+        canvas.create_rectangle(data.width/2 + 6 * data.margin * math.cos(pos) - data.margin/2,  data.height/2 + 5.75 * data.margin * math.sin(pos) - data.margin/4, data.width/2 + 6 * data.margin * math.cos(pos) + data.margin/2, data.height/2 + 5.75 * data.margin * math.sin(pos) + data.margin/4, fill = colBox, width = 0)
+        canvas.create_text(data.width/2 + 6 * data.margin * math.cos(pos),  data.height/2 + 5.75 * data.margin * math.sin(pos), text = txtBox, fill = "white", font = "Papyrus")
         pos += math.pi/2
     
     #draw Round Cards
-    x_r, y_r = data.width/2 - 2 * data.margin - 20 + data.margin/2, data.height/2 - data.margin
-    for i in range(len(data.roundCards)):
-        canvas.create_image(x_r, y_r, image = data.cardsImg[data.roundCards[i]])
-        playerI = ""
-        if i + int(data.startingPlayer[-1]) > 4:
-            playerI = i + int(data.startingPlayer[-1]) - 4
-        else:
-            playerI = i + int(data.startingPlayer[-1])
-        canvas.create_text(x_r, y_r - data.margin, text = playerI, fill = "white", font = "Papyrus")
-        x_r += 10 + data.margin            
+    if not data.playPairs:
+        x_r, y_r = data.width/2 - 2 * data.margin - 20 + data.margin/2, data.height/2 - data.margin
+        for i in range(len(data.roundCards)):
+            canvas.create_image(x_r, y_r, image = data.cardsImg[data.roundCards[i]])
+            playerI = ""
+            if i + int(data.startingPlayer[-1]) > 4:
+                playerI = i + int(data.startingPlayer[-1]) - 4
+            else:
+                playerI = i + int(data.startingPlayer[-1])
+            canvas.create_text(x_r, y_r - data.margin, text = playerI, fill = "white", font = "Papyrus")
+            x_r += 10 + data.margin         
+    else:
+        x_r, y_r = data.width/2 - 4 * data.margin - 40 + data.margin/2, data.height/2 - data.margin
+        for i in range(len(data.pairs)):
+            card1 = data.pairs[i][0]
+            card2 = data.pairs[i][1]
+            canvas.create_image(x_r, y_r, image = data.cardsImg[card1])
+            canvas.create_image(x_r + data.margin + 10, y_r, image = data.cardsImg[card2])
+            x_r += 20 + 2 * data.margin
     
     #draw cards
     x,y = data.width/2 - 6 * data.margin + data.margin/2, data.height - 5 * data.margin
+    coords = []
     for card in data.me.cards:
-        #print(x,y)
         if x >= data.width/2 + 6 * data.margin + data.margin/2:
             x = data.width/2 - 6 * data.margin + data.margin/2
             y = data.height - 3 * data.margin
+        if len(data.indivPairs) != 0 and not data.endRound:
+            for c in data.indivPairs:
+                if c == card:
+                    coords.append([x,y])
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
+
+    if len(data.indivPairs) != 0 and data.turn == data.me.PID and not data.endRound and len(coords) != 0:
+        canvas.create_rectangle(coords[0][0] - data.margin/2 - 3, coords[0][1] - data.cardHeight/2 - 3, coords[0][0] + data.margin/2 + 3, coords[0][1] + data.cardHeight/2 + 3, fill = data.yellow, width = 0)
+        canvas.create_image(coords[0][0], coords[0][1], image = data.cardsImg[data.indivPairs[0]])
     
     #waiting for turn
     if data.me.PID != data.turn:
@@ -1051,8 +1278,16 @@ def playGameRedrawAll(canvas, data):
             yPlayCard = data.height/2 - 4 * data.margin 
         else:
             yPlayCard = data.height/2 - 4.2* data.margin 
-            canvas.create_text(data.width/2, data.height/2 - 3.7 * data.margin, text = "Follow Suit!", fill = "white", font = "Papyrus 12")
-        canvas.create_text(data.width/2, yPlayCard, text = "Play a Card!", fill = "white", font = "Papyrus 20")
+            if data.numPlayed == 0:
+                txt = "Play a Same Suit Pair!"
+            else:
+                txt = "Follow Suit!"
+            canvas.create_text(data.width/2, data.height/2 - 3.7 * data.margin, text = txt, fill = "white", font = "Papyrus 12")
+        if data.playPairs:
+            txt = "Play a Pair!"
+        else:
+            txt = "Play a Card!"
+        canvas.create_text(data.width/2, yPlayCard, text = txt, fill = "white", font = "Papyrus 20")
         
     #wait for winner to start
     if data.endRound:
@@ -1067,7 +1302,7 @@ def playGameRedrawAll(canvas, data):
     
     #My Score
     if data.me.isDictator:
-        col = rgbString(255, 204, 0)
+        col = data.yellow
         txt = "Dictator"
     elif data.me.isAlly:
         col = "orange"
@@ -1081,6 +1316,11 @@ def playGameRedrawAll(canvas, data):
     #My Label
     canvas.create_rectangle(10, data.height - data.margin - 10, 10 + 2 * data.margin, data.height - 10, fill = data.labelCol)
     canvas.create_text(10 + data.margin, data.height - data.margin/2 - 10, fill = "white", text = data.me.PID, font = "Papyrus 20")
+    
+    #Pairs Button
+    if data.turn == data.me.PID and data.numPlayed == 0:
+        canvas.create_rectangle(data.width/2 - data.margin, data.height - 2 * data.margin, data.width/2 + data.margin, data.height - 1.5 * data.margin, fill = data.instructCol)
+        canvas.create_text(data.width/2, data.height - 1.75 * data.margin, text = "PAIRS", fill = "white", font = "Papyrus 20")
                        
 ####################################
 # end mode
@@ -1091,9 +1331,9 @@ def endMousePressed(event, data):
 
 #Restarts game when user clicks s
 def endKeyPressed(event, data):
-    if (event.keysym == "s"):
-        init(data)
-        data.trumpNum += 1
+    if (event.keysym == "space"):
+        resets(data)
+        data.mode = "start"
 
 def endTimerFired(data):
     pass
@@ -1107,7 +1347,7 @@ def endRedrawAll(canvas, data):
     canvas.create_text(data.width/2, data.height/2 - data.margin, text = data.whoWon + " Wins!", fill = "white", font = "Papyrus 30")
     
     #Restart
-    canvas.create_text(data.width/2, data.height + 3 * data.margin, text = "Press s to restart", fill = "white", font = "Papyrus 20")
+    canvas.create_text(data.width/2, data.height/2 + 3 * data.margin, text = "Press space to restart", fill = "white", font = "Papyrus 20")
 
 
 ####################################

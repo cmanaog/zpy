@@ -43,6 +43,21 @@ class Player(object):
             total += addition
         self.points += total
         return total
+    
+    def addPointsPairs(self, data, pairs):
+        addition = 0
+        for pair in pairs:
+            for card in pair:
+                num = int(card[:-1])
+                if num == 10 or num == 13:
+                    addition += 10
+                elif num == 5:
+                    addition += 5
+        self.points += addition
+        return addition
+            
+            
+            
             
     def cardPositions(self, data):
         x,y = data.width/2 - 6 * data.margin, data.height - 5 * data.margin

@@ -3,7 +3,6 @@ import math
 from tkinter import *
 import copy
 from card import *
-from image_util import *
 
 from PIL import Image
 from resizeimage import resizeimage
