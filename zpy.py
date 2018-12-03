@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 10022 #change each time you run, all computers use same host and port
+PORT = 18231 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -770,6 +770,21 @@ def dictRedrawAll(canvas, data):
 # playGame mode
 ####################################
 
+#sorts cards
+def sort(data):
+    spadesArr = sorted([int(c[:-1]) for c in data.me.cards if c[-1] == "s"])
+    heartsArr = sorted([int(c[:-1]) for c in data.me.cards if c[-1] == "h"])
+    diamondsArr = sorted([int(c[:-1]) for c in data.me.cards if c[-1] == "d"])
+    clubsArr = sorted([int(c[:-1]) for c in data.me.cards if c[-1] == "c"])
+    
+    spadesArr = [str(c) + "s" for c in spadesArr]
+    heartsArr = [str(c) + "h" for c in heartsArr]
+    diamondsArr = [str(c) + "d" for c in diamondsArr]
+    clubsArr = [str(c) + "c" for c in clubsArr]
+    
+    data.me.cards = spadesArr + heartsArr + diamondsArr + clubsArr
+
+
 #given array of hands from the round, determine who wins
 def whoWon(data):
     print("roundCards", data.roundCards)
@@ -1000,9 +1015,14 @@ def playGameMousePressed(event, data):
     msgDone = ""
     
     #clicked pairs button
-    if event.x >= data.width/2 - data.margin and event.y >= data.height - 2 * data.margin and event.x <= data.width/2 + data.margin and event.y <= data.height - 1.5 * data.margin and data.numPlayed == 0:
+    if event.x >= data.width * 0.75 - data.margin and event.y >= data.height - 2 * data.margin and event.x <= data.width* 0.75 + data.margin and event.y <= data.height - 1.5 * data.margin and data.numPlayed == 0:
         data.playPairs = not data.playPairs
         print(data.playPairs)
+        
+    #if clicked sort
+    
+    elif event.x >= data.width/4 - data.margin and event.y >= data.height - 2 * data.margin and event.x <= data.width/4 + data.margin and event.y <= data.height - 1.5 * data.margin:
+        sort(data)
     
     #play Pairs
     elif data.playPairs and data.turn == data.me.PID and isOnCard(data, event.x, event.y) != None:
@@ -1104,6 +1124,9 @@ def playGameKeyPressed(event, data):
         data.numPlayed = 0
         data.startingPlayer = data.me.PID
         msg = "continue " + str(data.endRound) + "\n"
+    
+    if event.keysym == "u" and data.turn == data.me.PID:
+        data.indivPairs.clear()
             
     # send the message to other players!
     if (msg != ""):
@@ -1263,6 +1286,7 @@ def playGameRedrawAll(canvas, data):
                     coords.append([x,y])
         canvas.create_image(x, y, image = data.cardsImg[card])
         x += data.margin
+        
     #Border around clicked cards
     if len(data.indivPairs) != 0 and data.turn == data.me.PID and not data.endRound and len(coords) != 0:
         canvas.create_rectangle(coords[0][0] - data.margin/2 - 3, coords[0][1] - data.cardHeight/2 - 3, coords[0][0] + data.margin/2 + 3, coords[0][1] + data.cardHeight/2 + 3, fill = data.yellow, width = 0)
@@ -1274,20 +1298,24 @@ def playGameRedrawAll(canvas, data):
         canvas.create_text(data.width/2, data.height/2 - 4 * data.margin, text = "Waiting for " + data.turn, fill = "white", font = "Papyrus 20")
     else:
         canvas.create_rectangle(data.width/2 - 2 * data.margin, data.height/2 - 5 * data.margin, data.width/2 + 2 * data.margin, data.height/2 - 3 * data.margin, fill = data.instructCol)
-        if data.validCard:
+        yPlayCard = data.height/2 - 4.2* data.margin 
+        if data.validCard and not data.playPairs:
             yPlayCard = data.height/2 - 4 * data.margin 
+            txt = ""
+        elif data.validCard and data.playPairs:
+            txt = "Press u to undo selection"
+            
         else:
-            yPlayCard = data.height/2 - 4.2* data.margin 
             if data.numPlayed == 0:
                 txt = "Play a Same Suit Pair!"
             else:
                 txt = "Follow Suit!"
-            canvas.create_text(data.width/2, data.height/2 - 3.7 * data.margin, text = txt, fill = "white", font = "Papyrus 12")
+        canvas.create_text(data.width/2, data.height/2 - 3.7 * data.margin, text = txt, fill = "white", font = "Papyrus 12")
         if data.playPairs:
-            txt = "Play a Pair!"
+            txtMain = "Play a Pair!"
         else:
-            txt = "Play a Card!"
-        canvas.create_text(data.width/2, yPlayCard, text = txt, fill = "white", font = "Papyrus 20")
+            txtMain = "Play a Card!"
+        canvas.create_text(data.width/2, yPlayCard, text = txtMain, fill = "white", font = "Papyrus 20")
         
     #wait for winner to start
     if data.endRound:
@@ -1319,8 +1347,12 @@ def playGameRedrawAll(canvas, data):
     
     #Pairs Button
     if data.turn == data.me.PID and data.numPlayed == 0:
-        canvas.create_rectangle(data.width/2 - data.margin, data.height - 2 * data.margin, data.width/2 + data.margin, data.height - 1.5 * data.margin, fill = data.instructCol)
-        canvas.create_text(data.width/2, data.height - 1.75 * data.margin, text = "PAIRS", fill = "white", font = "Papyrus 20")
+        canvas.create_rectangle(data.width * 0.75 - data.margin, data.height - 2 * data.margin, data.width * 0.75 + data.margin, data.height - 1.5 * data.margin, fill = data.instructCol)
+        canvas.create_text(data.width * 0.75, data.height - 1.75 * data.margin, text = "PAIRS", fill = "white", font = "Papyrus 15")
+    
+    #Sort Button
+    canvas.create_rectangle(data.width/4 - data.margin, data.height - 2 * data.margin, data.width/4 + data.margin, data.height - 1.5 * data.margin, fill = data.instructCol )
+    canvas.create_text(data.width/4, data.height - 1.75 * data.margin, text = "SORT", fill = "white", font = "Papyrus 15")
                        
 ####################################
 # end mode
