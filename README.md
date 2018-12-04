@@ -1,4 +1,4 @@
-# zpy
+ZPY
 Multiplayer Python Implementation of Chinese Trick Taking Card Game
 Project Description
 Name: Zhao Peng You (ZPY), English Name: Finding Friends
