@@ -23,6 +23,12 @@ img = Image.open('img/Cards/11h.gif')
 img = img.resize((50,73))
 img.save("img/Cards/11h.gif")
 
+#OLD CODE FROM ZPY
+#from PIL import Image
+#from resizeimage import resizeimage
+img = Image.open('img/arcticStart.gif')
+img = img.resize((1000,700))
+img.save("img/Cards/arcticStart.gif")
 
 trumpNum = "2"
 trumpSuit = "s"

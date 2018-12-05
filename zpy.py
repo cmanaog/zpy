@@ -8,7 +8,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 18231 #change each time you run, all computers use same host and port
+PORT = 11366 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -37,14 +37,7 @@ import string
 import math
 from tkinter import *
 import copy
-from images import *
 from card import *
-
-from PIL import Image
-from resizeimage import resizeimage
-'''img = Image.open('img/Cards/11h.gif')
-img = img.resize((50,73))
-img.save("img/Cards/11h.gif")'''
 
 ####################################
 # init
@@ -54,6 +47,7 @@ def rgbString(red, green, blue):
     
 #Initializes Data
 def init(data):
+    
     #Colors
     data.instructCol = rgbString(112,152,100) #old green
     data.labelCol = rgbString(137,91,78) #old blue
@@ -319,17 +313,17 @@ def startRedrawAll(canvas, data):
                        text="Zhao Peng You", font="Papyrus 100 bold")
            
     #Start Screen
-    canvas.create_rectangle(data.width/2 - 3 * data.margin, data.height/2 - data.margin, data.width/2 + 3 * data.margin, data.height/2, fill = data.turnCol)
+    canvas.create_rectangle(data.width/2 - 3 * data.margin, data.height/2 - data.margin, data.width/2 + 3 * data.margin, data.height/2, fill = data.turnCol, width = 0)
     canvas.create_text(data.width/2, data.height/2 - data.margin/2,
                        text="Start", font="Papyrus 20")
     
     #Options Screen
-    canvas.create_rectangle(data.width/2 - 3 * data.margin, data.height/2 + data.margin, data.width/2 + 3 * data.margin, data.height/2 + 2 * data.margin, fill = data.turnCol)
+    canvas.create_rectangle(data.width/2 - 3 * data.margin, data.height/2 + data.margin, data.width/2 + 3 * data.margin, data.height/2 + 2 * data.margin, fill = data.turnCol, width = 0)
     canvas.create_text(data.width/2, data.height/2 + 3 * data.margin/2,
                        text="Options", font="Papyrus 20")
     
     #Rules Screen
-    canvas.create_rectangle(data.width/2 - 3 * data.margin, data.height/2 + 3 * data.margin, data.width/2 + 3 * data.margin, data.height/2 + 4 * data.margin, fill = data.turnCol)
+    canvas.create_rectangle(data.width/2 - 3 * data.margin, data.height/2 + 3 * data.margin, data.width/2 + 3 * data.margin, data.height/2 + 4 * data.margin, fill = data.turnCol, width = 0)
     canvas.create_text(data.width/2, data.height/2 + 7 * data.margin/2,
                        text="Rules", font="Papyrus 20")
 ####################################
@@ -339,10 +333,36 @@ def startRedrawAll(canvas, data):
 def optionsMousePressed(event, data):
     if (event.x > data.margin and event.x < data.margin * 3 and event.y > data.margin and event.y < data.margin * 2):
         data.mode = "start"
+    elif event.x >= data.width/2 - 5 * data.margin and event.y >= data.margin * 3.5 and event.x <= data.width/2 - 2 * data.margin and event.y <= data.margin * 4.5:
+        data.instructCol = rgbString(112,152,100) 
+        data.labelCol = rgbString(137,91,78) 
+        data.turnCol = rgbString(212,235,179) 
+        data.errCol = rgbString(27,46,24) 
+        data.yellow = rgbString(255, 204, 0) 
+        data.startbg = PhotoImage(file="img/startbg.gif")
+    
+    elif event.x >= data.width/2 - 1.5 * data.margin and event.y >= data.margin * 3.5 and event.x <= data.width/2 + 1.5 * data.margin and event.y <= data.margin * 4.5:
+        data.instructCol = rgbString(61,104,229) #Dark Blue
+        data.labelCol = rgbString(115, 86, 219) #purple
+        data.turnCol = rgbString(255, 204, 0) #Yellow
+        data.errCol = rgbString(30,125,143) #gray blue
+        data.yellow = rgbString(61,229,229) #dictator light blue
+        data.startbg = PhotoImage(file="img/arcticStart.gif")
+        data.cover = PhotoImage(file = "img/Cards/penguin.gif")
+    
+    elif event.x >= data.width/2 + 2 * data.margin and event.y >= data.margin * 3.5 and event.x <= data.width/2 + 5 * data.margin and event.y <= data.margin * 4.5:
+        data.instructCol = rgbString(137,91,78) #Brown
+        data.labelCol = rgbString(86, 219, 128) #Bright Green
+        data.turnCol = rgbString(227, 141, 212) #Pink
+        data.errCol = rgbString(230, 48, 129) #Dark Pink
+        data.yellow = rgbString(255, 204, 0) #dictator yellow
+        data.startbg = PhotoImage(file="img/cookieStart.gif")
+        data.cover = PhotoImage(file = "img/Cards/cookie.gif")
 
 #switches to game mode
 def optionsKeyPressed(event, data):
     pass
+    
 
 #incrememnts moving block based off time 
 def optionsTimerFired(data):
@@ -351,10 +371,20 @@ def optionsTimerFired(data):
 #Draws block and text
 def optionsRedrawAll(canvas, data):
     canvas.create_image(0,0,anchor=NW, image=data.startbg)
-    canvas.create_rectangle(data.margin, data.margin, data.margin * 3, data.margin * 2, fill = data.labelCol)
+    canvas.create_rectangle(data.margin, data.margin, data.margin * 3, data.margin * 2, fill = data.labelCol, width = 0)
     canvas.create_text(data.margin * 2, data.margin * 1.5, text = "Home", font = "Papyrus 20", fill = "white")
     canvas.create_text(data.width/2, data.height/4 - data.margin * 2,
                        text="Options", font="Papyrus 50 bold")
+    #Change Colors
+    canvas.create_text(data.width/2, data.margin * 3, text = "Colors", font = "Papyrus 30 bold")
+    canvas.create_rectangle(data.width/2 - 5 * data.margin, data.margin * 3.5, data.width/2 - 2 * data.margin, data.margin * 4.5, fill = data.labelCol, width = 0)
+    canvas.create_text(data.width/2 - 3.5 * data.margin, data.margin * 4, font = "Papyrus 20", text = "Bamboo Theme", fill = "white")
+    canvas.create_rectangle(data.width/2 - 1.5 * data.margin, data.margin * 3.5, data.width/2 + 1.5 * data.margin, data.margin * 4.5, fill = data.labelCol, width = 0)
+    canvas.create_text(data.width/2, data.margin * 4, font = "Papyrus 20", text = "Penguin Theme", fill = "white")
+    canvas.create_rectangle(data.width/2 + 2 * data.margin, data.margin * 3.5, data.width/2 + 5 * data.margin, data.margin * 4.5, fill = data.labelCol, width = 0)
+    canvas.create_text(data.width/2 + 3.5 * data.margin, data.margin * 4, font = "Papyrus 20", text = "Cookie Theme", fill = "white")
+                       
+    
                        
 ####################################
 # Rules mode
@@ -374,10 +404,20 @@ def rulesTimerFired(data):
 #Draws block and text
 def rulesRedrawAll(canvas, data):
     canvas.create_image(0,0,anchor=NW, image=data.startbg)
-    canvas.create_rectangle(data.margin, data.margin, data.margin * 3, data.margin * 2, fill = data.labelCol)
+    canvas.create_rectangle(data.margin, data.margin, data.margin * 3, data.margin * 2, fill = data.labelCol, width = 0)
     canvas.create_text(data.margin * 2, data.margin * 1.5, text = "Home", fill = "white", font = "Papyrus 20")
     canvas.create_text(data.width/2, data.height/4 - data.margin * 2,
                        text="Rules", font="Papyrus 50 bold")
+    #Actual Rules
+    canvas.create_rectangle(3 * data.margin, 3 * data.margin, data.width - data.margin * 3, data.height - 3 * data.margin, fill = data.turnCol, width = 0)
+    canvas.create_text(data.width/2, 3.6 * data.margin, text = "Setup", font = "Papyrus 20 bold")
+    canvas.create_text(data.width/2, 4.7 * data.margin, text = "Players start by drawing cards until one reaches the Trump Number (starts off as 2). The suit of that Trump Number \nbecomes the Trump Suit and the player becomes the dictator. The dictator chooses an ally card (an ace), and \nthe player who plays that card becomes the dictator's ally. All other players are on the Opposition Team. The \ndictator can then swap out their own cards from the remaining 8 cards from the pot.", fill = "black", font = "Papyrus")
+    canvas.create_text(data.width/2, 5.9 * data.margin, text = "GamePlay", font = "Papyrus 20 bold")
+    canvas.create_text(data.width/2, 7 * data.margin, text = "The dictator then starts off the round by playing a single card or a pair of the same cards. The other players must \nfollow suit. If they do not have cards in that suit, they can choose to play any other card they want or Trump the round \nby playing cards of the Trump Suit. The player who played the highest value card gets points if any of the round cards \nwere 5 (5 pts), 10 (10 pmts), or King (10 its). They also start the next round.", font  = "Papyrus")
+    canvas.create_text(data.width/2, 8.4 * data.margin, text = "Card Ranking Per Round: Trump Number of the Trump Suit > Trump Number of Other Suits > Number of Trump Suit \n(Ace highest - 3 lowest) > Number of Starting Suit (Ace highest - 3 lowest) > All Other Cards", font = "Papyrus 12 bold")
+    canvas.create_text(data.width/2, 9.1 * data.margin, text = "End Game", font = "Papyrus 20 bold")
+    canvas.create_text(data.width/2, 10 * data.margin, text = "The Opposition Team’s goal is to reach 80 points while the Dictator Team’s goal is to prevent this from happening by the \ntime players run out of cards. Additionally, whoever wins the last round gets the points from the round plus double the \npoints from the beginning pot.", font = "Papyrus")
+    
 
                        
 ####################################
