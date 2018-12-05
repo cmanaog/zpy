@@ -1,13 +1,18 @@
-#############################
+#########################################
 # ZPY Server
-#############################
+#########################################
+
+#########################################
+#zpy_server.py Citation Comment:
+#Lines 10-81: Code Adapted from 112 Website on Sockets
+#########################################
 
 import socket
 import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 11366 #change each time you run, all computers use same host and port
+PORT = 12221 #change each time you run, all computers use same host and port
 BACKLOG = 4 #num clients able to join
 
 #creates server, connects to host and port, and listens for connections
@@ -74,5 +79,3 @@ while True:
   threading.Thread(target = handleClient, args = 
                         (client ,serverChannel, myID, clientele)).start()
   playerNum += 1
-
-# Above Code from 15-112 website on Sockets

@@ -1,36 +1,43 @@
-##########################
+#########################################
 # Player Class
-##########################
+#########################################
+#########################################
+#zpy_server.py Citation Comment:
+#Lines 1-24: Original Code
+#Lines 24-27: Adapted Code from 112 Sockets Website on Dots Game
+#Lines 27-65: Original Code
+#########################################
+
 import random 
         
 class Player(object):
     
+    #Constructs Player Class
     def __init__(self, PID):
         self.PID = PID
         self.cards = []
-        self.cardPos = []
         self.points = 0
         #player classifications
         self.isDictator = False
         self.isAlly = False
-        
+    
+    #Adds Player PID
     def changePID(self, PID):
         self.PID = PID
     
+    #Draws Card, adds to player deck
     def drawCard(self, data):
         cardNum = random.randint(0, len(data.cards)-1)
-        #print("card to remove", cardNum)
-        #print(data.cards)
         card = data.cards[cardNum]
         self.cards.append(card)
-        #data.cards.remove(card)
         return card        
         
+    #Plays Card, removes card
     def playCard(self, card):
         i = self.cards.index(card)
         self.cards.remove(card)
-        self.cardPos.pop(i)
     
+    #Adds Points based off round (single cards)
     def addPoints(self, data):
         total = 0
         for card in data.roundCards:
@@ -44,6 +51,7 @@ class Player(object):
         self.points += total
         return total
     
+    #Adds Points based off round (pair cards)
     def addPointsPairs(self, data, pairs):
         addition = 0
         for pair in pairs:
@@ -55,20 +63,3 @@ class Player(object):
                     addition += 5
         self.points += addition
         return addition
-            
-            
-            
-            
-    def cardPositions(self, data):
-        x,y = data.width/2 - 6 * data.margin, data.height - 5 * data.margin
-        for card in data.me.cards:
-            #print(x,y)
-            if x >= data.width/2 + 5 * data.margin:
-                x = data.width/2 - 6 * data.margin
-                y = data.height - 3 * data.margin
-            self.cardPos.append([x,y])
-            x += data.margin
-        print(self.cardPos)
-
-
-
