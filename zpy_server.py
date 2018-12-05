@@ -1,6 +1,6 @@
-#########################################
-# ZPY Server
-#########################################
+#########################################################
+# ZPY Server: Code for the Server to run and receive msgs
+#########################################################
 
 #########################################
 #zpy_server.py Citation Comment:
@@ -12,7 +12,7 @@ import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 12221 #change each time you run, all computers use same host and port
+PORT = 12433 #change each time you run, all computers use same host and port
 BACKLOG = 4 #num clients able to join
 
 #creates server, connects to host and port, and listens for connections

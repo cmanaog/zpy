@@ -1,23 +1,23 @@
-#########################################
-# ZPY by Clarissa Xu
-#########################################
-#########################################
+###############################################
+# ZPY Client Code to Run Game For Indiv. Player
+###############################################
+###############################################
 #zpy_server.py Citation Comment:
 #Lines 15-40: Adapted Code from 112 Website on Sockets
 #Lines 40-52: Original Code
 #Lines 52-55: Adapteed Code from 112 Website on Special RGB Colors
-#Lines 55-520: Original Code
-#Lines 520-530: New Player Joining Code from 112 Website on Sockets
-#Lines 530-1451: Original Code
-#Lines 1451-1505: Run Function from 112 Animation Website
-#########################################
+#Lines 55-521: Original Code
+#Lines 521-532: New Player Joining Code from 112 Website on Sockets
+#Lines 532-1452: Original Code
+#Lines 1452-1507: Run Function from 112 Animation Website
+###############################################
 
 import socket
 import threading
 from queue import Queue
 
 HOST = "" # put your IP address here if playing on multiple computers, everyone else adds that IP addresss and port. sometimes, using localhost will help
-PORT = 12221 #change each time you run, all computers use same host and port
+PORT = 12433 #change each time you run, all computers use same host and port
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -218,6 +218,7 @@ def resets(data):
     data.roundCards = []
     data.endRound = False
     data.startSuit = ""
+    data.me.cards = []
     
     data.turn = "Player1"
     data.dictator = None
@@ -359,6 +360,7 @@ def optionsMousePressed(event, data):
         data.errCol = rgbString(27,46,24) 
         data.yellow = rgbString(255, 204, 0) 
         data.startbg = PhotoImage(file="img/startbg.gif")
+        data.cover = PhotoImage(file = "img/Cards/cover.gif")
     
     elif event.x >= data.width/2 - 1.5 * data.margin and event.y >= data.margin * 3.5 and event.x <= data.width/2 + 1.5 * data.margin and event.y <= data.margin * 4.5:
         data.instructCol = rgbString(61,104,229) #Dark Blue
